@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: typecheck / lint / test / build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      # Placeholder values so env validation passes during CI.
+      # Real values come from GitHub Secrets in deploy workflows.
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-key
+      SUPABASE_DB_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      GEMINI_API_KEY: ci-placeholder
+      ANTHROPIC_API_KEY: ci-placeholder
+      LLM_PRIVACY_MODE: claude_haiku
+      GMAIL_USER: ci@example.com
+      GMAIL_APP_PASSWORD: ci-placeholder
+      WORKER_ID: ci-worker
+      PLAYWRIGHT_HEADLESS: 'true'
+      TECTONIC_CACHE_DIR: /tmp/tectonic
+      ENABLE_AUTO_SUBMIT: 'false'
+      ENABLE_LINKEDIN_EXTENSION: 'true'
+      DAILY_APPLICATION_CAP: '30'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
