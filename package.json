@@ -1,0 +1,52 @@
+{
+  "name": "career-autopilot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Personal job-application automation system — see CLAUDE.md",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": "20.18.0"
+  },
+  "packageManager": "pnpm@9.12.3",
+  "scripts": {
+    "bootstrap": "bash scripts/bootstrap.sh",
+    "dev": "pnpm --filter @career-autopilot/web dev",
+    "dev:worker": "pnpm --filter \"./workers/*\" --parallel dev",
+    "dev:extension": "pnpm --filter @career-autopilot/extension dev",
+    "db:migrate": "supabase db push",
+    "db:types": "bash scripts/gen-types.sh",
+    "db:reset:local": "supabase db reset --local",
+    "db:seed": "supabase db execute --file supabase/seed.sql",
+    "test": "pnpm -r --no-bail test",
+    "test:watch": "pnpm -r --parallel test --watch",
+    "test:integration": "pnpm -r --no-bail test:integration",
+    "test:e2e": "pnpm --filter @career-autopilot/web test:e2e",
+    "test:honesty": "pnpm --filter @career-autopilot/resume test:honesty",
+    "test:verifier": "pnpm --filter @career-autopilot/resume test:verifier",
+    "lint": "pnpm -r --no-bail lint",
+    "lint:fix": "pnpm -r --no-bail lint:fix",
+    "typecheck": "pnpm -r --no-bail typecheck",
+    "build": "pnpm -r --filter \"./apps/*\" --filter \"./packages/*\" build",
+    "deploy:web": "pnpm --filter @career-autopilot/web deploy",
+    "deploy:workers": "bash scripts/deploy-workers.sh",
+    "quotas:check": "tsx scripts/check-quotas.ts",
+    "queue:inspect": "tsx scripts/queue-inspect.ts",
+    "keepalive": "tsx scripts/keepalive.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "3.3.5",
+    "@eslint/js": "9.16.0",
+    "@types/node": "20.19.39",
+    "@typescript-eslint/eslint-plugin": "8.59.0",
+    "@typescript-eslint/parser": "8.59.0",
+    "eslint": "9.16.0",
+    "prettier": "3.4.2",
+    "supabase": "1.219.2",
+    "tsx": "4.19.2",
+    "typescript": "5.6.3",
+    "vitest": "2.1.8",
+    "@vitest/coverage-v8": "2.1.8"
+  }
+}
