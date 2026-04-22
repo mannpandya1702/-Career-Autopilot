@@ -17,7 +17,8 @@
   },
   "dependencies": {
     "@career-autopilot/shared": "workspace:*",
-    "@opendocsg/pdf2md": "0.2.6"
+    "@opendocsg/pdf2md": "0.2.6",
+    "zod": "3.23.8"
   },
   "devDependencies": {
     "eslint": "9.16.0",

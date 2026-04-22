@@ -2,3 +2,5 @@
 // Populated in Phase 2 (profile schema) and Phase 5 (tailor + render).
 
 export const RESUME_PACKAGE_VERSION = '0.1.0';
+
+export * from './schemas/profile';
