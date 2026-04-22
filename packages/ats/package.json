@@ -16,6 +16,7 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
+    "@career-autopilot/db": "workspace:*",
     "@career-autopilot/shared": "workspace:*",
     "zod": "3.23.8"
   },
