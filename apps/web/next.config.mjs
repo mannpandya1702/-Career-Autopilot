@@ -9,6 +9,8 @@ const nextConfig = {
   transpilePackages: [
     '@career-autopilot/shared',
     '@career-autopilot/db',
+    '@career-autopilot/parsers',
+    '@career-autopilot/resume',
   ],
 };
 
