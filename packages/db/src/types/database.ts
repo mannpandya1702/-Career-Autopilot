@@ -36,6 +36,14 @@ export type StoryDimension =
   | 'teamwork'
   | 'customer_focus';
 
+export type AtsType =
+  | 'greenhouse'
+  | 'lever'
+  | 'ashby'
+  | 'workable'
+  | 'smartrecruiters'
+  | 'custom';
+
 type Timestamped = {
   created_at: string;
   updated_at: string;
@@ -423,6 +431,112 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['profile_audit']['Insert']>;
         Relationships: [];
       };
+
+      // ---- Phase 3 ----
+      companies: {
+        Row: {
+          id: string;
+          name: string;
+          ats_type: AtsType;
+          ats_slug: string;
+          careers_url: string | null;
+          website: string | null;
+          industry: string | null;
+          size_min: number | null;
+          size_max: number | null;
+          research_pack: Json | null;
+          last_crawled_at: string | null;
+          priority: number;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          name: string;
+          ats_type: AtsType;
+          ats_slug: string;
+          careers_url?: string | null;
+          website?: string | null;
+          industry?: string | null;
+          size_min?: number | null;
+          size_max?: number | null;
+          research_pack?: Json | null;
+          last_crawled_at?: string | null;
+          priority?: number;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['companies']['Insert']>;
+        Relationships: [];
+      };
+
+      jobs: {
+        Row: {
+          id: string;
+          company_id: string;
+          external_id: string;
+          title: string;
+          normalized_title: string | null;
+          location: string | null;
+          remote_policy: WorkMode | null;
+          description: string;
+          description_hash: string;
+          salary_min: number | null;
+          salary_max: number | null;
+          salary_currency: string | null;
+          apply_url: string;
+          posted_at: string | null;
+          first_seen_at: string;
+          last_seen_at: string;
+          status: string;
+          canonical_job_id: string | null;
+          raw_payload: Json | null;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          company_id: string;
+          external_id: string;
+          title: string;
+          normalized_title?: string | null;
+          location?: string | null;
+          remote_policy?: WorkMode | null;
+          description: string;
+          description_hash: string;
+          salary_min?: number | null;
+          salary_max?: number | null;
+          salary_currency?: string | null;
+          apply_url: string;
+          posted_at?: string | null;
+          first_seen_at?: string;
+          last_seen_at?: string;
+          status?: string;
+          canonical_job_id?: string | null;
+          raw_payload?: Json | null;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['jobs']['Insert']>;
+        Relationships: [];
+      };
+
+      job_crawl_runs: {
+        Row: {
+          id: string;
+          company_id: string | null;
+          started_at: string;
+          completed_at: string | null;
+          jobs_found: number | null;
+          jobs_new: number | null;
+          jobs_updated: number | null;
+          error: string | null;
+        };
+        Insert: {
+          id?: string;
+          company_id?: string | null;
+          started_at?: string;
+          completed_at?: string | null;
+          jobs_found?: number | null;
+          jobs_new?: number | null;
+          jobs_updated?: number | null;
+          error?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['job_crawl_runs']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -432,6 +546,7 @@ export interface Database {
       job_type: JobType;
       skill_category: SkillCategory;
       story_dimension: StoryDimension;
+      ats_type: AtsType;
     };
     CompositeTypes: Record<string, never>;
   };

@@ -6,4 +6,5 @@ export type {
   JobType,
   SkillCategory,
   StoryDimension,
+  AtsType,
 } from './types/database.js';
