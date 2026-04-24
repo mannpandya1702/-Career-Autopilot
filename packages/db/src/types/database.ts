@@ -537,6 +537,55 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['job_crawl_runs']['Insert']>;
         Relationships: [];
       };
+
+      // ---- Phase 4 ----
+      job_embeddings: {
+        Row: {
+          job_id: string;
+          jd_embedding: string; // pgvector serialized
+          parsed_jd: Json;
+        } & Timestamped;
+        Insert: {
+          job_id: string;
+          jd_embedding: string;
+          parsed_jd: Json;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['job_embeddings']['Insert']>;
+        Relationships: [];
+      };
+
+      job_scores: {
+        Row: {
+          id: string;
+          user_id: string;
+          job_id: string;
+          profile_version_hash: string;
+          hard_filter_pass: boolean;
+          hard_filter_reasons: string[] | null;
+          semantic_score: number | null;
+          overall_score: number | null;
+          dimensions: Json | null;
+          must_have_gaps: string[] | null;
+          judge_reasoning: string | null;
+          tier: 'auto_apply' | 'pending_review' | 'needs_decision' | 'low_fit' | 'rejected';
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          job_id: string;
+          profile_version_hash: string;
+          hard_filter_pass: boolean;
+          hard_filter_reasons?: string[] | null;
+          semantic_score?: number | null;
+          overall_score?: number | null;
+          dimensions?: Json | null;
+          must_have_gaps?: string[] | null;
+          judge_reasoning?: string | null;
+          tier: 'auto_apply' | 'pending_review' | 'needs_decision' | 'low_fit' | 'rejected';
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['job_scores']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
