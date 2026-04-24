@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { JobWithCompany } from '@/lib/jobs/queries';
+import { FitScoreRing } from './FitScoreRing';
 
 const STATUS_TABS = ['active', 'pending_review', 'needs_decision', 'low_fit', 'closed'] as const;
 const ATS_TABS = ['all', 'greenhouse', 'lever', 'ashby', 'workable'] as const;
@@ -80,25 +81,34 @@ export function JobsInbox({
                 type="button"
                 onClick={() => setSelected(job)}
                 className={[
-                  'w-full rounded-md border px-3 py-2 text-left text-sm transition',
+                  'flex w-full items-center gap-3 rounded-md border px-3 py-2 text-left text-sm transition',
                   selected?.id === job.id ? 'border-foreground bg-muted' : 'border-border bg-white',
                 ].join(' ')}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{job.title}</span>
-                  {job.company && (
-                    <span className="text-xs text-muted-foreground">
-                      {job.company.name}
-                    </span>
-                  )}
-                </div>
-                <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>{job.location ?? '—'}</span>
-                  {job.remote_policy && <span>· {job.remote_policy}</span>}
-                  {job.posted_at && (
-                    <span>· posted {new Date(job.posted_at).toLocaleDateString()}</span>
-                  )}
-                  {job.company?.ats_type && <span>· {job.company.ats_type}</span>}
+                <FitScoreRing score={job.score?.overall_score ?? null} size={40} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-medium">{job.title}</span>
+                    {job.company && (
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {job.company.name}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{job.location ?? '—'}</span>
+                    {job.remote_policy && <span>· {job.remote_policy}</span>}
+                    {job.posted_at && (
+                      <span>· posted {new Date(job.posted_at).toLocaleDateString()}</span>
+                    )}
+                    {job.company?.ats_type && <span>· {job.company.ats_type}</span>}
+                    {(job.score?.must_have_gaps?.length ?? 0) > 0 && (
+                      <span className="text-red-700">
+                        · {job.score?.must_have_gaps?.length} gap
+                        {job.score?.must_have_gaps?.length === 1 ? '' : 's'}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </button>
             </li>
@@ -125,12 +135,44 @@ function JobDetail({ job }: { job: JobWithCompany }) {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-border p-4">
-        <h2 className="text-lg font-semibold">{job.title}</h2>
-        <div className="mt-1 text-sm text-muted-foreground">
-          {job.company?.name}
-          {job.location && ` · ${job.location}`}
-          {job.remote_policy && ` · ${job.remote_policy}`}
+        <div className="flex items-start gap-3">
+          <FitScoreRing score={job.score?.overall_score ?? null} size={56} />
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold">{job.title}</h2>
+            <div className="mt-1 text-sm text-muted-foreground">
+              {job.company?.name}
+              {job.location && ` · ${job.location}`}
+              {job.remote_policy && ` · ${job.remote_policy}`}
+            </div>
+          </div>
         </div>
+
+        {job.score && (
+          <div className="mt-4 space-y-3 text-xs">
+            {!job.score.hard_filter_pass && (
+              <div className="rounded border border-red-300 bg-red-50 p-2 text-red-700">
+                Rejected by hard filters: {(job.score.hard_filter_reasons ?? []).join('; ')}
+              </div>
+            )}
+            {job.score.dimensions && (
+              <DimensionsGrid dimensions={job.score.dimensions as Record<string, number>} />
+            )}
+            {(job.score.must_have_gaps?.length ?? 0) > 0 && (
+              <div>
+                <div className="font-medium text-red-700">Must-have gaps</div>
+                <ul className="mt-1 list-disc pl-4">
+                  {job.score.must_have_gaps?.map((g, i) => (
+                    <li key={i}>{g}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {job.score.judge_reasoning && (
+              <p className="text-muted-foreground">{job.score.judge_reasoning}</p>
+            )}
+          </div>
+        )}
+
         <div className="mt-3 flex gap-2">
           <a href={job.apply_url} target="_blank" rel="noopener noreferrer" className="btn-secondary">
             Apply page ↗
@@ -139,7 +181,7 @@ function JobDetail({ job }: { job: JobWithCompany }) {
             {rawVisible ? 'Hide raw' : 'Show raw'}
           </button>
           <button type="button" className="btn-primary" disabled>
-            Score this (Phase 4)
+            Tailor (Phase 5)
           </button>
         </div>
       </div>
@@ -158,6 +200,37 @@ function EmptyDetail() {
   return (
     <div className="flex flex-1 items-center justify-center p-6 text-sm text-muted-foreground">
       Select a job to view details.
+    </div>
+  );
+}
+
+const DIMENSION_LABELS: Record<string, string> = {
+  skills: 'Skills',
+  experience: 'Experience',
+  domain: 'Domain',
+  seniority: 'Seniority',
+  logistics: 'Logistics',
+};
+
+function DimensionsGrid({ dimensions }: { dimensions: Record<string, number> }) {
+  const entries = Object.entries(dimensions).filter(([k]) => k in DIMENSION_LABELS);
+  if (entries.length === 0) return null;
+  return (
+    <div>
+      <div className="mb-1 font-medium">Score breakdown</div>
+      <div className="grid grid-cols-5 gap-2">
+        {entries.map(([key, value]) => {
+          const pct = Math.max(0, Math.min(100, Number(value) || 0));
+          return (
+            <div key={key} className="rounded border border-border p-2 text-center">
+              <div className="text-[10px] uppercase text-muted-foreground">
+                {DIMENSION_LABELS[key]}
+              </div>
+              <div className="mt-0.5 text-sm font-semibold">{pct}</div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
