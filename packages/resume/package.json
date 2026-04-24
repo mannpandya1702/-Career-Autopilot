@@ -18,6 +18,7 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
+    "@career-autopilot/llm": "workspace:*",
     "@career-autopilot/shared": "workspace:*",
     "docx": "9.1.0",
     "zod": "3.23.8"
