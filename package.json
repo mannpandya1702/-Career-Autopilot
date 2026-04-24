@@ -32,6 +32,8 @@
     "quotas:check": "tsx scripts/check-quotas.ts",
     "queue:inspect": "tsx scripts/queue-inspect.ts",
     "keepalive": "tsx scripts/keepalive.ts",
+    "seed:companies": "tsx scripts/seed-companies.ts",
+    "crawl:enqueue": "tsx scripts/crawl-enqueue.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -41,12 +43,19 @@
     "@types/node": "20.19.39",
     "@typescript-eslint/eslint-plugin": "8.59.0",
     "@typescript-eslint/parser": "8.59.0",
+    "@vitest/coverage-v8": "2.1.8",
     "eslint": "9.16.0",
     "prettier": "3.4.2",
     "supabase": "1.219.2",
     "tsx": "4.19.2",
     "typescript": "5.6.3",
     "vitest": "2.1.8",
-    "@vitest/coverage-v8": "2.1.8"
+    "yaml": "2.6.1"
+  },
+  "dependencies": {
+    "@career-autopilot/db": "workspace:*",
+    "@career-autopilot/shared": "workspace:*",
+    "@supabase/supabase-js": "2.104.0",
+    "zod": "3.23.8"
   }
 }
