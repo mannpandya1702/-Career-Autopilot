@@ -1,0 +1,49 @@
+name: crawl-jobs
+
+# 4x daily — runs `pnpm crawl:enqueue` which pushes one pgmq message per
+# active company. The long-running crawler worker on the Oracle VM picks
+# these up and hits the ATS APIs.
+#
+# Triggered on push to main for quick smoke-test (no-op when no companies
+# exist yet).
+
+on:
+  schedule:
+    # 02:00, 08:00, 14:00, 20:00 UTC
+    - cron: '0 2,8,14,20 * * *'
+  workflow_dispatch: {}
+
+concurrency:
+  group: crawl-jobs
+  cancel-in-progress: false
+
+jobs:
+  enqueue:
+    name: Enqueue pgmq messages
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Enqueue
+        run: pnpm crawl:enqueue
