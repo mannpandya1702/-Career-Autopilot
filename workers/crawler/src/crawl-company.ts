@@ -11,6 +11,7 @@ import type { AtsType, NormalisedJob } from '@career-autopilot/ats';
 import { getAdapter } from '@career-autopilot/ats';
 import type { Database, Json } from '@career-autopilot/db';
 import type { RateLimiter } from './rate-limit';
+import { enqueueScoringForJobs } from './enqueue-scoring';
 
 export interface CrawlCompanyInput {
   company_id: string;
@@ -25,6 +26,7 @@ export interface CrawlCompanyResult {
   jobs_new: number;
   jobs_updated: number;
   jobs_closed: number;
+  scoring_enqueued: number;
   error?: string;
 }
 
@@ -55,6 +57,7 @@ export async function crawlCompany(
       jobs_new: 0,
       jobs_updated: 0,
       jobs_closed: 0,
+      scoring_enqueued: 0,
       error: `no adapter for ats=${input.ats}`,
     };
   }
@@ -117,6 +120,30 @@ export async function crawlCompany(
       .update({ last_crawled_at: now })
       .eq('id', input.company_id);
 
+    // P4.8 — enqueue scoring for new OR updated jobs. We re-fetch the ids of
+    // the just-upserted jobs so we pass real UUIDs (not external_ids) to the
+    // scorer queue.
+    let scoring_enqueued = 0;
+    const interestingExternalIds = listResult.jobs
+      .filter((j) => {
+        const existing = existingByExternalId.get(j.external_id);
+        if (!existing) return true; // new
+        return existing.description_hash !== j.description_hash; // updated
+      })
+      .map((j) => j.external_id);
+
+    if (interestingExternalIds.length > 0) {
+      const { data: idRows, error: idError } = await supabase
+        .from('jobs')
+        .select('id')
+        .eq('company_id', input.company_id)
+        .in('external_id', interestingExternalIds);
+      if (idError) throw new Error(`jobs id fetch failed: ${idError.message}`);
+      const jobIds = (idRows ?? []).map((r) => r.id);
+      const result = await enqueueScoringForJobs(supabase, jobIds);
+      scoring_enqueued = result.enqueued;
+    }
+
     await completeRun(supabase, runRow.id, {
       jobs_found: listResult.jobs.length,
       jobs_new,
@@ -129,6 +156,7 @@ export async function crawlCompany(
       jobs_new,
       jobs_updated,
       jobs_closed: toClose.length,
+      scoring_enqueued,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -144,6 +172,7 @@ export async function crawlCompany(
       jobs_new: 0,
       jobs_updated: 0,
       jobs_closed: 0,
+      scoring_enqueued: 0,
       error: message,
     };
   }

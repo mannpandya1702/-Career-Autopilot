@@ -5,7 +5,8 @@ import { crawlCompany } from './crawl-company';
 import { RateLimiter } from './rate-limit';
 
 // Minimal SupabaseClient stub. Captures every insert/update/upsert so we can
-// assert on what the crawler did without a real DB.
+// assert on what the crawler did without a real DB. Returns empty arrays
+// everywhere reads aren't interesting to the test.
 function makeFakeSupabase(initialExisting: Record<string, unknown>[] = []) {
   const calls: Record<string, unknown[]> = {
     'job_crawl_runs.insert': [],
@@ -13,6 +14,33 @@ function makeFakeSupabase(initialExisting: Record<string, unknown>[] = []) {
     'jobs.upsert': [],
     'jobs.update': [],
     'companies.update': [],
+    'rpc.pgmq_send': [],
+  };
+
+  // Chainable thenable that also supports the supabase-js filter methods we
+  // touch (.eq/.in/.not) and resolves to { data, error }.
+  const makeChain = (data: unknown): PromiseLike<{ data: unknown; error: null }> & {
+    eq: (...args: unknown[]) => typeof chain;
+    in: (...args: unknown[]) => typeof chain;
+    not: (...args: unknown[]) => typeof chain;
+    order: (...args: unknown[]) => typeof chain;
+    limit: (...args: unknown[]) => typeof chain;
+    maybeSingle: () => Promise<{ data: unknown; error: null }>;
+    single: () => Promise<{ data: unknown; error: null }>;
+    then: Promise<{ data: unknown; error: null }>['then'];
+  } => {
+    const chain = {
+      eq: () => chain,
+      in: () => chain,
+      not: () => chain,
+      order: () => chain,
+      limit: () => chain,
+      maybeSingle: async () => ({ data, error: null }),
+      single: async () => ({ data, error: null }),
+      then: (resolve: (v: { data: unknown; error: null }) => unknown) =>
+        Promise.resolve({ data, error: null }).then(resolve),
+    };
+    return chain as never;
   };
 
   const api: unknown = {
@@ -34,10 +62,9 @@ function makeFakeSupabase(initialExisting: Record<string, unknown>[] = []) {
           throw new Error(`unexpected insert on ${table}`);
         },
         select() {
-          // Only the jobs.select('id,external_id,...').eq('company_id', ...) path.
-          return {
-            eq: async () => ({ data: initialExisting, error: null }),
-          };
+          if (table === 'jobs') return makeChain(initialExisting);
+          if (table === 'profiles') return makeChain([]);
+          return makeChain([]);
         },
         upsert(payload: unknown) {
           calls[`${table}.upsert`]?.push(payload);
@@ -51,6 +78,10 @@ function makeFakeSupabase(initialExisting: Record<string, unknown>[] = []) {
           };
         },
       };
+    },
+    rpc(name: string, args: unknown) {
+      calls[`rpc.${name}`]?.push(args);
+      return Promise.resolve({ data: null, error: null });
     },
   };
 
@@ -86,7 +117,6 @@ describe('crawlCompany', () => {
         { status: 200 },
       )) as typeof fetch;
 
-    // Patch the global fetch for this test so the adapter uses it.
     const prev = globalThis.fetch;
     globalThis.fetch = fetchImpl;
 
@@ -104,15 +134,14 @@ describe('crawlCompany', () => {
       expect(result.jobs_new).toBe(2);
       expect(result.jobs_updated).toBe(0);
       expect(result.jobs_closed).toBe(0);
+      expect(result.scoring_enqueued).toBe(0); // no users in the fake profile table
 
-      // One upsert batch of 2 rows.
       expect(calls['jobs.upsert']).toHaveLength(1);
       const batch = calls['jobs.upsert']?.[0] as Record<string, unknown>[];
       expect(batch).toHaveLength(2);
       expect(batch[0]?.['external_id']).toBe('1');
       expect(batch[1]?.['external_id']).toBe('2');
 
-      // Run was opened and closed.
       expect(calls['job_crawl_runs.insert']).toHaveLength(1);
       expect(calls['job_crawl_runs.update']).toHaveLength(1);
       const runUpdate = calls['job_crawl_runs.update']?.[0] as {
