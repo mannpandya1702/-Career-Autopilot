@@ -4,6 +4,9 @@
 export const RESUME_PACKAGE_VERSION = '0.1.0';
 
 export * from './schemas/profile';
+export * from './schemas/resume';
 export * from './fit/hard-filters';
 export * from './fit/semantic';
 export * from './fit/tiering';
+export * from './tailor/honesty';
+export * from './render';

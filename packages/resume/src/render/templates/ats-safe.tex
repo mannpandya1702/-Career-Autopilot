@@ -1,0 +1,51 @@
+% ATS-safe single-column resume template.
+% Constraints (docs/build-phases.md P5.7):
+%   - Single column, no tables, no graphics.
+%   - Standard section headings ("Summary", "Experience", "Projects",
+%     "Skills", "Education", "Certifications") so resume parsers find them.
+%   - Serif body font (LaTeX article default = Computer Modern).
+%   - 11pt body; ~0.7in margins; no embedded images.
+%
+% Placeholders are double-curly-brace tokens that the renderer (latex.ts)
+% substitutes from a TailoredResume + RenderHeader. User content is
+% escapeLatex()-ed before substitution.
+
+\documentclass[11pt,letterpaper]{article}
+\usepackage[margin=0.7in]{geometry}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, urlcolor=black}
+\setlist[itemize]{leftmargin=*, topsep=2pt, parsep=0pt, itemsep=2pt}
+\pagenumbering{gobble}
+
+\begin{document}
+
+% ---- Header ----
+\begin{center}
+{\LARGE \textbf{ {{FULL_NAME}} } } \\[2pt]
+{{HEADER_LINE}}
+\end{center}
+
+% ---- Summary ----
+\section*{Summary}
+{{SUMMARY}}
+
+% ---- Experience ----
+\section*{Experience}
+{{EXPERIENCE_BLOCKS}}
+
+% ---- Projects ----
+{{PROJECTS_SECTION}}
+
+% ---- Skills ----
+\section*{Skills}
+{{SKILLS_BLOCK}}
+
+% ---- Education ----
+\section*{Education}
+{{EDUCATION_BLOCKS}}
+
+% ---- Certifications ----
+{{CERTIFICATIONS_SECTION}}
+
+\end{document}
