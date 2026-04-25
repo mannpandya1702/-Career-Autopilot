@@ -5,13 +5,16 @@ import Link from 'next/link';
 import type { TailoredResume } from '@career-autopilot/resume';
 import type { JobWithCompany } from '@/lib/jobs/queries';
 import type { LoadedTailoredResume } from '@/lib/jobs/tailored';
+import type { LoadedVerification } from '@/lib/jobs/verifications';
 
 export function ReviewWorkspace({
   job,
   tailored,
+  verification,
 }: {
   job: JobWithCompany;
   tailored: LoadedTailoredResume | null;
+  verification: LoadedVerification | null;
 }) {
   const [hint, setHint] = useState('');
   return (
@@ -29,6 +32,8 @@ export function ReviewWorkspace({
           Back to inbox
         </Link>
       </header>
+
+      {verification && <VerificationPanel verification={verification} />}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_1.4fr_0.9fr]">
         <JdPanel job={job} />
@@ -253,5 +258,59 @@ function ApprovePanel({
         </div>
       )}
     </aside>
+  );
+}
+
+function VerificationPanel({ verification }: { verification: LoadedVerification }) {
+  const v = verification;
+  const tone = v.passed ? 'border-green-300 bg-green-50' : 'border-amber-300 bg-amber-50';
+  return (
+    <section className={`flex flex-col gap-3 rounded-md border ${tone} p-3 text-sm`}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-sm font-medium">
+          ATS verifier · overall {v.overall_score}/100 ·{' '}
+          <span className={v.passed ? 'text-green-700' : 'text-amber-700'}>
+            {v.passed ? 'passed' : 'below threshold'}
+          </span>
+        </h2>
+        <span className="text-xs text-muted-foreground">
+          {new Date(v.created_at).toLocaleString()}
+        </span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <ScoreCell label="Parse agreement" score={v.parse_agreement_score} weight="40%" />
+        <ScoreCell label="Keyword coverage" score={v.keyword_coverage_score} weight="50%" />
+        <ScoreCell label="Format compliance" score={v.format_compliance_score} weight="10%" />
+      </div>
+      {v.missing_keywords && v.missing_keywords.length > 0 && (
+        <div className="text-xs">
+          <span className="font-medium">Missing keywords:</span>{' '}
+          {v.missing_keywords.join(', ')}
+        </div>
+      )}
+      {v.format_issues && v.format_issues.length > 0 && (
+        <div className="text-xs">
+          <span className="font-medium">Format issues:</span>
+          <ul className="mt-1 list-disc pl-4">
+            {v.format_issues.map((i, k) => (
+              <li key={k}>{i}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ScoreCell({ label, score, weight }: { label: string; score: number; weight: string }) {
+  const colour = score >= 80 ? 'text-green-700' : score >= 60 ? 'text-amber-700' : 'text-red-700';
+  return (
+    <div className="rounded border border-border bg-white p-2">
+      <div className="flex items-center justify-between text-[10px] uppercase text-muted-foreground">
+        <span>{label}</span>
+        <span>{weight}</span>
+      </div>
+      <div className={`mt-0.5 text-sm font-semibold ${colour}`}>{score}</div>
+    </div>
   );
 }

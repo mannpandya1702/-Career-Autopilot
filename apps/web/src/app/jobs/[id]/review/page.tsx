@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getJobById } from '@/lib/jobs/queries';
 import { getLatestTailoredResume } from '@/lib/jobs/tailored';
+import { getLatestVerification } from '@/lib/jobs/verifications';
 import { ReviewWorkspace } from './ReviewWorkspace';
 
 export const metadata = { title: 'Review — Career Autopilot' };
@@ -22,6 +23,11 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
   if (!job) notFound();
 
   const tailored = await getLatestTailoredResume(user.id, id);
+  const verification = tailored
+    ? await getLatestVerification(user.id, tailored.id)
+    : null;
 
-  return <ReviewWorkspace job={job} tailored={tailored} />;
+  return (
+    <ReviewWorkspace job={job} tailored={tailored} verification={verification} />
+  );
 }
