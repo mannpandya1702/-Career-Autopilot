@@ -242,6 +242,9 @@ importers:
       '@career-autopilot/llm':
         specifier: workspace:*
         version: link:../llm
+      '@career-autopilot/parsers':
+        specifier: workspace:*
+        version: link:../parsers
       '@career-autopilot/shared':
         specifier: workspace:*
         version: link:../shared
@@ -397,6 +400,43 @@ importers:
       '@career-autopilot/llm':
         specifier: workspace:*
         version: link:../../packages/llm
+      '@career-autopilot/resume':
+        specifier: workspace:*
+        version: link:../../packages/resume
+      '@career-autopilot/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      '@supabase/supabase-js':
+        specifier: 2.104.0
+        version: 2.104.0
+      zod:
+        specifier: 3.23.8
+        version: 3.23.8
+    devDependencies:
+      '@types/node':
+        specifier: 20.19.39
+        version: 20.19.39
+      eslint:
+        specifier: 9.16.0
+        version: 9.16.0(jiti@1.21.7)
+      tsx:
+        specifier: 4.19.2
+        version: 4.19.2
+      typescript:
+        specifier: 5.6.3
+        version: 5.6.3
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@20.19.39)(terser@5.46.1)
+
+  workers/verifier:
+    dependencies:
+      '@career-autopilot/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@career-autopilot/parsers':
+        specifier: workspace:*
+        version: link:../../packages/parsers
       '@career-autopilot/resume':
         specifier: workspace:*
         version: link:../../packages/resume

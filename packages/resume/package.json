@@ -13,12 +13,13 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "test": "vitest run --passWithNoTests",
-    "test:honesty": "vitest run --passWithNoTests tests/honesty",
+    "test:honesty": "vitest run --passWithNoTests src/tailor/honesty.test.ts",
     "test:verifier": "vitest run --passWithNoTests tests/verifier",
     "build": "tsc --noEmit"
   },
   "dependencies": {
     "@career-autopilot/llm": "workspace:*",
+    "@career-autopilot/parsers": "workspace:*",
     "@career-autopilot/shared": "workspace:*",
     "docx": "9.1.0",
     "zod": "3.23.8"

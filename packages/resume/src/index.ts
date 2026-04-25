@@ -10,3 +10,4 @@ export * from './fit/semantic';
 export * from './fit/tiering';
 export * from './tailor/honesty';
 export * from './render';
+export * from './verify';
