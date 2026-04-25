@@ -626,6 +626,40 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['tailored_resumes']['Insert']>;
         Relationships: [];
       };
+
+      // ---- Phase 6 ----
+      verifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          tailored_resume_id: string;
+          overall_score: number;
+          parse_agreement_score: number;
+          keyword_coverage_score: number;
+          format_compliance_score: number;
+          parser_results: Json;
+          missing_keywords: string[] | null;
+          format_issues: string[] | null;
+          passed: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          tailored_resume_id: string;
+          overall_score: number;
+          parse_agreement_score: number;
+          keyword_coverage_score: number;
+          format_compliance_score: number;
+          parser_results: Json;
+          missing_keywords?: string[] | null;
+          format_issues?: string[] | null;
+          passed: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['verifications']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
