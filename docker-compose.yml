@@ -1,0 +1,100 @@
+# Career Autopilot worker stack — runs on the Oracle Cloud Always Free
+# ARM Ampere A1 Flex VM. See docs/runbooks/deploy.md for deploy steps.
+#
+# Image SHA digests (CLAUDE.md §2.3 — pin everything):
+#   node:20.18.0-slim    sha256 must be added when first pulled on the VM;
+#                        record it back here so future rebuilds are deterministic.
+#   tectonictypesetting/tectonic:0.15.0-alpine
+#   python:3.11-slim
+#
+# Services use a shared `.env` file with the variables documented in
+# CLAUDE.md §6 (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+# GEMINI_API_KEY, ANTHROPIC_API_KEY, etc.).
+
+x-worker-base: &worker-base
+  image: node:20.18.0-slim
+  env_file: .env
+  restart: unless-stopped
+  working_dir: /app
+  volumes:
+    - ./:/app:ro
+  # The workers share the lock-free pgmq queue via Supabase, so they don't
+  # need to talk to each other directly.
+  init: true
+
+services:
+  crawler-worker:
+    <<: *worker-base
+    container_name: cap-crawler
+    command: ["pnpm", "--filter", "@career-autopilot/crawler", "start"]
+
+  scorer-worker:
+    <<: *worker-base
+    container_name: cap-scorer
+    command: ["pnpm", "--filter", "@career-autopilot/scorer", "start"]
+    depends_on:
+      - crawler-worker
+
+  tailor-worker:
+    <<: *worker-base
+    container_name: cap-tailor
+    command: ["pnpm", "--filter", "@career-autopilot/tailor-worker", "start"]
+    environment:
+      TECTONIC_AVAILABLE: "true"
+    depends_on:
+      - tectonic-svc
+
+  verify-worker:
+    <<: *worker-base
+    container_name: cap-verifier
+    command: ["pnpm", "--filter", "@career-autopilot/verifier-worker", "start"]
+    environment:
+      PYRESPARSER_URL: http://pyresparser-svc:8001
+      OPENRESUME_URL: http://openresume-svc:8002
+    depends_on:
+      - pyresparser-svc
+      - openresume-svc
+
+  profile-embedder-worker:
+    <<: *worker-base
+    container_name: cap-profile-embedder
+    command: ["pnpm", "--filter", "@career-autopilot/profile-embedder", "start"]
+
+  # --- ATS-parser services ---
+  pyresparser-svc:
+    image: python:3.11-slim
+    container_name: cap-pyresparser
+    restart: unless-stopped
+    working_dir: /svc
+    volumes:
+      - ./services/pyresparser:/svc:ro
+    command: ["sh", "-c", "pip install --no-cache-dir -r requirements.txt && uvicorn app:app --host 0.0.0.0 --port 8001"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  openresume-svc:
+    image: node:20.18.0-slim
+    container_name: cap-openresume
+    restart: unless-stopped
+    working_dir: /svc
+    volumes:
+      - ./services/openresume:/svc:ro
+    command: ["sh", "-c", "npm ci --omit=dev && node server.js"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8002/health').then(r=>process.exit(r.ok?0:1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # --- LaTeX rendering ---
+  tectonic-svc:
+    image: tectonictypesetting/tectonic:0.15.0
+    container_name: cap-tectonic
+    restart: unless-stopped
+    # The tailor worker shells out to `tectonic` directly; this service
+    # exists so a small REST-shim variant can be added later when we want
+    # remote rendering. For now it just keeps the binary cached.
+    command: ["sleep", "infinity"]
