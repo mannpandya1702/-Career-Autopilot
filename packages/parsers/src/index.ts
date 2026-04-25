@@ -31,3 +31,6 @@ export { EnrichmentSchema, mergeEnrichment, noopEnricher } from './enrich';
 
 export { parseLinkedInPdf, parseResumePdf } from './parse-resume';
 export type { ParseOptions } from './parse-resume';
+
+// Phase 6 — verifier parsers.
+export * from './verify';
