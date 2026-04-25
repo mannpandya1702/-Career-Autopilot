@@ -31,10 +31,17 @@ export { jdParsePrompt, ParsedJdSchema } from './prompts/jd-parse/v1';
 export type { JdParseInput, ParsedJd } from './prompts/jd-parse/v1';
 export { fitJudgePrompt, FitJudgmentSchema } from './prompts/fit-judge/v1';
 export type { FitJudgeInput, FitJudgment } from './prompts/fit-judge/v1';
+export {
+  tailorPrompt,
+  tailorHardPrompt,
+  TailorOutputSchema,
+} from './prompts/tailor/v1';
+export type { TailorInput, TailorOutput } from './prompts/tailor/v1';
 
 // Tasks
 export { parseJd } from './tasks/jd-parse';
 export { judgeFit } from './tasks/fit-judge';
+export { tailorResume, tailorResumeHard } from './tasks/tailor';
 export {
   embedJd,
   embedProfileSummary,
