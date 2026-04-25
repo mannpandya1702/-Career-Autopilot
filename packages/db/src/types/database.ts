@@ -586,6 +586,46 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['job_scores']['Insert']>;
         Relationships: [];
       };
+
+      // ---- Phase 5 ----
+      tailored_resumes: {
+        Row: {
+          id: string;
+          user_id: string;
+          job_id: string;
+          profile_version_hash: string;
+          prompt_version: string;
+          llm_model: string;
+          resume_json: Json;
+          pdf_url: string | null;
+          docx_url: string | null;
+          honesty_check_passed: boolean;
+          honesty_violations: string[] | null;
+          regeneration_count: number;
+          tokens_in: number | null;
+          tokens_out: number | null;
+          cost_usd: number | null;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          job_id: string;
+          profile_version_hash: string;
+          prompt_version: string;
+          llm_model: string;
+          resume_json: Json;
+          pdf_url?: string | null;
+          docx_url?: string | null;
+          honesty_check_passed: boolean;
+          honesty_violations?: string[] | null;
+          regeneration_count?: number;
+          tokens_in?: number | null;
+          tokens_out?: number | null;
+          cost_usd?: number | null;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['tailored_resumes']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
