@@ -9,5 +9,6 @@ export * from './fit/hard-filters';
 export * from './fit/semantic';
 export * from './fit/tiering';
 export * from './tailor/honesty';
+export * from './tailor/consistency';
 export * from './render';
 export * from './verify';
