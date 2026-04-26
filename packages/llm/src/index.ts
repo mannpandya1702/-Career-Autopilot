@@ -37,11 +37,20 @@ export {
   TailorOutputSchema,
 } from './prompts/tailor/v1';
 export type { TailorInput, TailorOutput } from './prompts/tailor/v1';
+export { coverLetterPrompt, CoverLetterSchema } from './prompts/cover-letter/v1';
+export type { CoverLetterInput, CoverLetterOutput } from './prompts/cover-letter/v1';
+export { qaAnswerPrompt, QaAnswerSchema } from './prompts/qa-answer/v1';
+export type { QaAnswerInput, QaAnswerOutput } from './prompts/qa-answer/v1';
+export { companyResearchPrompt, ResearchPackSchema } from './prompts/company-research/v1';
+export type { CompanyResearchInput, ResearchPack } from './prompts/company-research/v1';
 
 // Tasks
 export { parseJd } from './tasks/jd-parse';
 export { judgeFit } from './tasks/fit-judge';
 export { tailorResume, tailorResumeHard } from './tasks/tailor';
+export { generateCoverLetter } from './tasks/cover-letter';
+export { answerQuestion, hashQuestion } from './tasks/qa-answer';
+export { summariseCompanyResearch } from './tasks/company-research';
 export {
   embedJd,
   embedProfileSummary,
