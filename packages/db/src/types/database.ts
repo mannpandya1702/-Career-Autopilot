@@ -660,6 +660,102 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['verifications']['Insert']>;
         Relationships: [];
       };
+
+      // ---- Phase 7 ----
+      cover_letters: {
+        Row: {
+          id: string;
+          user_id: string;
+          tailored_resume_id: string;
+          prompt_version: string;
+          llm_model: string;
+          greeting: string | null;
+          body: string;
+          signoff: string | null;
+          word_count: number | null;
+          honesty_check_passed: boolean;
+          tokens_in: number | null;
+          tokens_out: number | null;
+          cost_usd: number | null;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          tailored_resume_id: string;
+          prompt_version: string;
+          llm_model: string;
+          greeting?: string | null;
+          body: string;
+          signoff?: string | null;
+          word_count?: number | null;
+          honesty_check_passed: boolean;
+          tokens_in?: number | null;
+          tokens_out?: number | null;
+          cost_usd?: number | null;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['cover_letters']['Insert']>;
+        Relationships: [];
+      };
+
+      question_answers: {
+        Row: {
+          id: string;
+          user_id: string;
+          job_id: string;
+          tailored_resume_id: string | null;
+          question_hash: string;
+          question_text: string;
+          question_type: string;
+          word_limit: number | null;
+          answer_text: string;
+          source: string;
+          confidence: number | null;
+          consistency_check_passed: boolean | null;
+          consistency_violations: string[] | null;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          job_id: string;
+          tailored_resume_id?: string | null;
+          question_hash: string;
+          question_text: string;
+          question_type: string;
+          word_limit?: number | null;
+          answer_text: string;
+          source: string;
+          confidence?: number | null;
+          consistency_check_passed?: boolean | null;
+          consistency_violations?: string[] | null;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['question_answers']['Insert']>;
+        Relationships: [];
+      };
+
+      answer_cache: {
+        Row: {
+          id: string;
+          user_id: string;
+          question_hash: string;
+          question_text: string;
+          answer_text: string;
+          context_fingerprint: string | null;
+          hit_count: number;
+          last_used_at: string;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          question_hash: string;
+          question_text: string;
+          answer_text: string;
+          context_fingerprint?: string | null;
+          hit_count?: number;
+          last_used_at?: string;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['answer_cache']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
