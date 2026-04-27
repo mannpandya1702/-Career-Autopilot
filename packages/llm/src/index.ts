@@ -43,6 +43,8 @@ export { qaAnswerPrompt, QaAnswerSchema } from './prompts/qa-answer/v1';
 export type { QaAnswerInput, QaAnswerOutput } from './prompts/qa-answer/v1';
 export { companyResearchPrompt, ResearchPackSchema } from './prompts/company-research/v1';
 export type { CompanyResearchInput, ResearchPack } from './prompts/company-research/v1';
+export { emailClassifyPrompt, EmailClassificationSchema } from './prompts/email-classify/v1';
+export type { EmailClassifyInput, EmailClassification } from './prompts/email-classify/v1';
 
 // Tasks
 export { parseJd } from './tasks/jd-parse';
@@ -51,6 +53,7 @@ export { tailorResume, tailorResumeHard } from './tasks/tailor';
 export { generateCoverLetter } from './tasks/cover-letter';
 export { answerQuestion, hashQuestion } from './tasks/qa-answer';
 export { summariseCompanyResearch } from './tasks/company-research';
+export { classifyEmail } from './tasks/email-classify';
 export {
   embedJd,
   embedProfileSummary,
