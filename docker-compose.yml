@@ -60,6 +60,21 @@ services:
     container_name: cap-profile-embedder
     command: ["pnpm", "--filter", "@career-autopilot/profile-embedder", "start"]
 
+  submitter-worker:
+    <<: *worker-base
+    container_name: cap-submitter
+    command: ["pnpm", "--filter", "@career-autopilot/submitter-worker", "start"]
+    # CLAUDE.md §12 hard gate: only flips to 'true' once the user has
+    # personally reviewed 10+ dry-run applications. Default false.
+    environment:
+      ENABLE_AUTO_SUBMIT: "${ENABLE_AUTO_SUBMIT:-false}"
+      DAILY_APPLICATION_CAP: "${DAILY_APPLICATION_CAP:-30}"
+
+  follow-up-worker:
+    <<: *worker-base
+    container_name: cap-follow-up
+    command: ["pnpm", "--filter", "@career-autopilot/follow-up-worker", "start"]
+
   # --- ATS-parser services ---
   pyresparser-svc:
     image: python:3.11-slim
