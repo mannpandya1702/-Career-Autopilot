@@ -7,4 +7,6 @@ export type {
   SkillCategory,
   StoryDimension,
   AtsType,
+  SubmitMethod,
+  SubmitStatus,
 } from './types/database.js';

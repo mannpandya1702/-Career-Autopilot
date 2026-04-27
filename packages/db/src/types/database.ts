@@ -44,6 +44,9 @@ export type AtsType =
   | 'smartrecruiters'
   | 'custom';
 
+export type SubmitMethod = 'ats_api' | 'playwright' | 'manual';
+export type SubmitStatus = 'queued' | 'in_progress' | 'succeeded' | 'failed' | 'skipped';
+
 type Timestamped = {
   created_at: string;
   updated_at: string;
@@ -756,6 +759,94 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['answer_cache']['Insert']>;
         Relationships: [];
       };
+
+      // ---- Phase 8 ----
+      submissions: {
+        Row: {
+          id: string;
+          user_id: string;
+          job_id: string;
+          tailored_resume_id: string;
+          cover_letter_id: string | null;
+          method: SubmitMethod;
+          status: SubmitStatus;
+          submitted_at: string | null;
+          external_confirmation_id: string | null;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          job_id: string;
+          tailored_resume_id: string;
+          cover_letter_id?: string | null;
+          method: SubmitMethod;
+          status?: SubmitStatus;
+          submitted_at?: string | null;
+          external_confirmation_id?: string | null;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['submissions']['Insert']>;
+        Relationships: [];
+      };
+
+      submission_attempts: {
+        Row: {
+          id: string;
+          submission_id: string;
+          attempt_number: number;
+          method: SubmitMethod;
+          success: boolean;
+          request_payload: Json | null;
+          response_payload: Json | null;
+          screenshots: string[] | null;
+          error_message: string | null;
+          error_stack: string | null;
+          duration_ms: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          submission_id: string;
+          attempt_number: number;
+          method: SubmitMethod;
+          success: boolean;
+          request_payload?: Json | null;
+          response_payload?: Json | null;
+          screenshots?: string[] | null;
+          error_message?: string | null;
+          error_stack?: string | null;
+          duration_ms?: number | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['submission_attempts']['Insert']>;
+        Relationships: [];
+      };
+
+      manual_review_queue: {
+        Row: {
+          id: string;
+          user_id: string;
+          submission_id: string;
+          reason: string;
+          context: Json | null;
+          screenshots: string[] | null;
+          resolved_at: string | null;
+          resolution: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          submission_id: string;
+          reason: string;
+          context?: Json | null;
+          screenshots?: string[] | null;
+          resolved_at?: string | null;
+          resolution?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['manual_review_queue']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -766,6 +857,8 @@ export interface Database {
       skill_category: SkillCategory;
       story_dimension: StoryDimension;
       ats_type: AtsType;
+      submit_method: SubmitMethod;
+      submit_status: SubmitStatus;
     };
     CompositeTypes: Record<string, never>;
   };
