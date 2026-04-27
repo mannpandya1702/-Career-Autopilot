@@ -34,6 +34,7 @@
     "keepalive": "tsx scripts/keepalive.ts",
     "seed:companies": "tsx scripts/seed-companies.ts",
     "crawl:enqueue": "tsx scripts/crawl-enqueue.ts",
+    "calibrate:fit": "tsx scripts/calibrate-fit.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

@@ -12,3 +12,4 @@ export * from './tailor/honesty';
 export * from './tailor/consistency';
 export * from './render';
 export * from './verify';
+export * from './predict/response';
