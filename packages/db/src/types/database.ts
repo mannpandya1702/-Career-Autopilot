@@ -47,6 +47,18 @@ export type AtsType =
 export type SubmitMethod = 'ats_api' | 'playwright' | 'manual';
 export type SubmitStatus = 'queued' | 'in_progress' | 'succeeded' | 'failed' | 'skipped';
 
+export type OutcomeType =
+  | 'submitted'
+  | 'acknowledged'
+  | 'callback'
+  | 'rejection'
+  | 'interview_invite'
+  | 'interview_completed'
+  | 'offer'
+  | 'declined'
+  | 'accepted'
+  | 'ghosted';
+
 type Timestamped = {
   created_at: string;
   updated_at: string;
@@ -847,6 +859,55 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['manual_review_queue']['Insert']>;
         Relationships: [];
       };
+
+      // ---- Phase 9 ----
+      outcomes: {
+        Row: {
+          id: string;
+          user_id: string;
+          submission_id: string;
+          stage: OutcomeType;
+          reached_at: string;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          submission_id: string;
+          stage: OutcomeType;
+          reached_at: string;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['outcomes']['Insert']>;
+        Relationships: [];
+      };
+
+      outcome_events: {
+        Row: {
+          id: string;
+          user_id: string;
+          submission_id: string | null;
+          source: string;
+          outcome_type: OutcomeType;
+          confidence: number | null;
+          payload: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          submission_id?: string | null;
+          source: string;
+          outcome_type: OutcomeType;
+          confidence?: number | null;
+          payload?: Json | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['outcome_events']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -859,6 +920,7 @@ export interface Database {
       ats_type: AtsType;
       submit_method: SubmitMethod;
       submit_status: SubmitStatus;
+      outcome_type: OutcomeType;
     };
     CompositeTypes: Record<string, never>;
   };

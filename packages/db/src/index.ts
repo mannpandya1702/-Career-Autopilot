@@ -9,4 +9,5 @@ export type {
   AtsType,
   SubmitMethod,
   SubmitStatus,
+  OutcomeType,
 } from './types/database.js';
