@@ -1,0 +1,108 @@
+# Target companies for the crawler. User-editable: add or remove rows as your
+# target list evolves. Each row upserts into public.companies via
+# `pnpm tsx scripts/seed-companies.ts`.
+#
+# Fields:
+#   name     — human-readable company name.
+#   ats      — one of: greenhouse | lever | ashby | workable | smartrecruiters
+#   slug     — vendor-specific identifier. Find it in the careers page URL:
+#                greenhouse: boards.greenhouse.io/<slug>
+#                lever:      jobs.lever.co/<slug>
+#                ashby:      jobs.ashbyhq.com/<slug>
+#                workable:   apply.workable.com/<slug>
+#   priority — 0–10 (higher crawled first). Default 0.
+#   careers_url — optional; the public careers page URL.
+#
+# The starter list below mixes documented example slugs (safe to crawl) with a
+# handful of well-known companies. Confirm each slug against the live careers
+# page before enabling in production; vendors do change these.
+
+- name: Lever Demo
+  ats: lever
+  slug: leverdemo
+  priority: 1
+  careers_url: https://jobs.lever.co/leverdemo
+
+- name: Ashby
+  ats: ashby
+  slug: Ashby
+  priority: 3
+  careers_url: https://jobs.ashbyhq.com/Ashby
+
+- name: Linear
+  ats: ashby
+  slug: Linear
+  priority: 5
+  careers_url: https://linear.app/careers
+
+- name: Notion
+  ats: ashby
+  slug: Notion
+  priority: 5
+  careers_url: https://www.notion.so/careers
+
+- name: Ramp
+  ats: ashby
+  slug: Ramp
+  priority: 5
+  careers_url: https://ramp.com/careers
+
+- name: Vercel
+  ats: greenhouse
+  slug: vercel
+  priority: 5
+  careers_url: https://vercel.com/careers
+
+- name: Stripe
+  ats: greenhouse
+  slug: stripe
+  priority: 6
+  careers_url: https://stripe.com/jobs
+
+- name: Airbnb
+  ats: greenhouse
+  slug: airbnb
+  priority: 4
+  careers_url: https://careers.airbnb.com
+
+- name: DoorDash
+  ats: greenhouse
+  slug: doordash
+  priority: 3
+  careers_url: https://careers.doordash.com
+
+- name: Reddit
+  ats: greenhouse
+  slug: reddit
+  priority: 3
+  careers_url: https://redditinc.com/careers
+
+- name: Coinbase
+  ats: greenhouse
+  slug: coinbase
+  priority: 3
+  careers_url: https://www.coinbase.com/careers
+
+- name: Plaid
+  ats: lever
+  slug: plaid
+  priority: 4
+  careers_url: https://plaid.com/careers
+
+- name: Netlify
+  ats: lever
+  slug: netlify
+  priority: 4
+  careers_url: https://www.netlify.com/careers
+
+- name: PlanetScale
+  ats: lever
+  slug: planetscale
+  priority: 4
+  careers_url: https://planetscale.com/careers
+
+- name: Supabase
+  ats: workable
+  slug: supabase
+  priority: 5
+  careers_url: https://supabase.com/careers

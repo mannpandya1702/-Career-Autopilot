@@ -1,0 +1,927 @@
+// Placeholder until `pnpm db:types` runs against a live Supabase project.
+// After any migration, regenerate with `pnpm db:types` (see scripts/gen-types.sh).
+// Mirrors the DDL in supabase/migrations — kept in sync by hand until we can run
+// the Supabase CLI against a real project.
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+// ---- Enums (match SQL `create type ... as enum`) ----
+export type ExperienceLevel = 'intern' | 'entry' | 'mid' | 'senior' | 'lead' | 'principal';
+export type WorkMode = 'remote' | 'hybrid' | 'onsite';
+export type JobType = 'full_time' | 'part_time' | 'contract' | 'internship' | 'freelance';
+export type SkillCategory =
+  | 'language'
+  | 'framework'
+  | 'tool'
+  | 'domain'
+  | 'soft'
+  | 'certification'
+  | 'database'
+  | 'cloud';
+export type StoryDimension =
+  | 'leadership'
+  | 'conflict'
+  | 'failure'
+  | 'ambiguity'
+  | 'ownership'
+  | 'influence'
+  | 'learning'
+  | 'metric_win'
+  | 'teamwork'
+  | 'customer_focus';
+
+export type AtsType =
+  | 'greenhouse'
+  | 'lever'
+  | 'ashby'
+  | 'workable'
+  | 'smartrecruiters'
+  | 'custom';
+
+export type SubmitMethod = 'ats_api' | 'playwright' | 'manual';
+export type SubmitStatus = 'queued' | 'in_progress' | 'succeeded' | 'failed' | 'skipped';
+
+export type OutcomeType =
+  | 'submitted'
+  | 'acknowledged'
+  | 'callback'
+  | 'rejection'
+  | 'interview_invite'
+  | 'interview_completed'
+  | 'offer'
+  | 'declined'
+  | 'accepted'
+  | 'ghosted';
+
+type Timestamped = {
+  created_at: string;
+  updated_at: string;
+};
+
+type TimestampedInsert = {
+  created_at?: string;
+  updated_at?: string;
+};
+
+export interface Database {
+  public: {
+    Tables: {
+      // ---- Phase 1 ----
+      user_profiles: {
+        Row: {
+          user_id: string;
+          display_name: string | null;
+          timezone: string;
+          onboarded_at: string | null;
+        } & Timestamped;
+        Insert: {
+          user_id: string;
+          display_name?: string | null;
+          timezone?: string;
+          onboarded_at?: string | null;
+        } & TimestampedInsert;
+        Update: {
+          user_id?: string;
+          display_name?: string | null;
+          timezone?: string;
+          onboarded_at?: string | null;
+        } & TimestampedInsert;
+        Relationships: [];
+      };
+
+      // ---- Phase 2 ----
+      profiles: {
+        Row: {
+          id: string;
+          user_id: string;
+          full_name: string;
+          email: string;
+          phone: string | null;
+          location: string | null;
+          linkedin_url: string | null;
+          github_url: string | null;
+          portfolio_url: string | null;
+          headline: string | null;
+          summary: string | null;
+          derived_summary: string | null;
+          summary_embedding: string | null; // pgvector serialized
+          visa_status: string | null;
+          work_authorization: string[] | null;
+          years_experience: number | null;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          full_name: string;
+          email: string;
+          phone?: string | null;
+          location?: string | null;
+          linkedin_url?: string | null;
+          github_url?: string | null;
+          portfolio_url?: string | null;
+          headline?: string | null;
+          summary?: string | null;
+          derived_summary?: string | null;
+          summary_embedding?: string | null;
+          visa_status?: string | null;
+          work_authorization?: string[] | null;
+          years_experience?: number | null;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
+        Relationships: [];
+      };
+
+      experiences: {
+        Row: {
+          id: string;
+          user_id: string;
+          profile_id: string;
+          company: string;
+          title: string;
+          location: string | null;
+          work_mode: WorkMode | null;
+          start_date: string;
+          end_date: string | null;
+          is_current: boolean;
+          description: string | null;
+          tech_stack: string[] | null;
+          ord: number;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          profile_id: string;
+          company: string;
+          title: string;
+          location?: string | null;
+          work_mode?: WorkMode | null;
+          start_date: string;
+          end_date?: string | null;
+          description?: string | null;
+          tech_stack?: string[] | null;
+          ord?: number;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['experiences']['Insert']>;
+        Relationships: [];
+      };
+
+      experience_bullets: {
+        Row: {
+          id: string;
+          user_id: string;
+          experience_id: string;
+          text: string;
+          metrics: Json | null;
+          skill_tags: string[] | null;
+          story_id: string | null;
+          ord: number;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          experience_id: string;
+          text: string;
+          metrics?: Json | null;
+          skill_tags?: string[] | null;
+          story_id?: string | null;
+          ord?: number;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['experience_bullets']['Insert']>;
+        Relationships: [];
+      };
+
+      bullet_variants: {
+        Row: {
+          id: string;
+          bullet_id: string;
+          text: string;
+          emphasis_tags: string[] | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          bullet_id: string;
+          text: string;
+          emphasis_tags?: string[] | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['bullet_variants']['Insert']>;
+        Relationships: [];
+      };
+
+      projects: {
+        Row: {
+          id: string;
+          user_id: string;
+          profile_id: string;
+          name: string;
+          role: string | null;
+          start_date: string | null;
+          end_date: string | null;
+          description: string | null;
+          tech_stack: string[] | null;
+          url: string | null;
+          metrics: Json | null;
+          skill_tags: string[] | null;
+          ord: number;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          profile_id: string;
+          name: string;
+          role?: string | null;
+          start_date?: string | null;
+          end_date?: string | null;
+          description?: string | null;
+          tech_stack?: string[] | null;
+          url?: string | null;
+          metrics?: Json | null;
+          skill_tags?: string[] | null;
+          ord?: number;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['projects']['Insert']>;
+        Relationships: [];
+      };
+
+      skills: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          category: SkillCategory;
+          proficiency: number | null;
+          years_experience: number | null;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          category: SkillCategory;
+          proficiency?: number | null;
+          years_experience?: number | null;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['skills']['Insert']>;
+        Relationships: [];
+      };
+
+      education: {
+        Row: {
+          id: string;
+          user_id: string;
+          profile_id: string;
+          institution: string;
+          degree: string | null;
+          field: string | null;
+          start_date: string | null;
+          end_date: string | null;
+          gpa: number | null;
+          coursework: string[] | null;
+          honors: string[] | null;
+          ord: number;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          profile_id: string;
+          institution: string;
+          degree?: string | null;
+          field?: string | null;
+          start_date?: string | null;
+          end_date?: string | null;
+          gpa?: number | null;
+          coursework?: string[] | null;
+          honors?: string[] | null;
+          ord?: number;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['education']['Insert']>;
+        Relationships: [];
+      };
+
+      stories: {
+        Row: {
+          id: string;
+          user_id: string;
+          profile_id: string;
+          dimensions: StoryDimension[];
+          title: string;
+          situation: string;
+          task: string;
+          action: string;
+          result: string;
+          reflection: string | null;
+          linked_experience_id: string | null;
+          linked_project_id: string | null;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          profile_id: string;
+          dimensions: StoryDimension[];
+          title: string;
+          situation: string;
+          task: string;
+          action: string;
+          result: string;
+          reflection?: string | null;
+          linked_experience_id?: string | null;
+          linked_project_id?: string | null;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['stories']['Insert']>;
+        Relationships: [];
+      };
+
+      preferences: {
+        Row: {
+          user_id: string;
+          experience_levels: ExperienceLevel[];
+          work_modes: WorkMode[];
+          job_types: JobType[];
+          salary_min: number | null;
+          salary_max: number | null;
+          salary_currency: string;
+          locations: string[] | null;
+          remote_anywhere: boolean;
+          industries_include: string[] | null;
+          industries_exclude: string[] | null;
+          company_size_min: number | null;
+          company_size_max: number | null;
+          notice_period_days: number | null;
+          willing_to_relocate: boolean;
+          daily_app_cap: number;
+        } & Timestamped;
+        Insert: {
+          user_id: string;
+          experience_levels?: ExperienceLevel[];
+          work_modes?: WorkMode[];
+          job_types?: JobType[];
+          salary_min?: number | null;
+          salary_max?: number | null;
+          salary_currency?: string;
+          locations?: string[] | null;
+          remote_anywhere?: boolean;
+          industries_include?: string[] | null;
+          industries_exclude?: string[] | null;
+          company_size_min?: number | null;
+          company_size_max?: number | null;
+          notice_period_days?: number | null;
+          willing_to_relocate?: boolean;
+          daily_app_cap?: number;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['preferences']['Insert']>;
+        Relationships: [];
+      };
+
+      question_bank: {
+        Row: {
+          id: string;
+          user_id: string;
+          question_key: string;
+          question_text: string;
+          answer_text: string;
+          word_limit: number | null;
+          tags: string[] | null;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          question_key: string;
+          question_text: string;
+          answer_text: string;
+          word_limit?: number | null;
+          tags?: string[] | null;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['question_bank']['Insert']>;
+        Relationships: [];
+      };
+
+      skill_profiles: {
+        Row: {
+          id: string;
+          user_id: string;
+          skill_id: string;
+          experience_id: string | null;
+          project_id: string | null;
+          weight: number;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          skill_id: string;
+          experience_id?: string | null;
+          project_id?: string | null;
+          weight?: number;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['skill_profiles']['Insert']>;
+        Relationships: [];
+      };
+
+      profile_audit: {
+        Row: {
+          id: string;
+          user_id: string;
+          entity_type: string;
+          entity_id: string;
+          action: 'insert' | 'update' | 'delete';
+          before: Json | null;
+          after: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          entity_type: string;
+          entity_id: string;
+          action: 'insert' | 'update' | 'delete';
+          before?: Json | null;
+          after?: Json | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['profile_audit']['Insert']>;
+        Relationships: [];
+      };
+
+      // ---- Phase 3 ----
+      companies: {
+        Row: {
+          id: string;
+          name: string;
+          ats_type: AtsType;
+          ats_slug: string;
+          careers_url: string | null;
+          website: string | null;
+          industry: string | null;
+          size_min: number | null;
+          size_max: number | null;
+          research_pack: Json | null;
+          last_crawled_at: string | null;
+          priority: number;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          name: string;
+          ats_type: AtsType;
+          ats_slug: string;
+          careers_url?: string | null;
+          website?: string | null;
+          industry?: string | null;
+          size_min?: number | null;
+          size_max?: number | null;
+          research_pack?: Json | null;
+          last_crawled_at?: string | null;
+          priority?: number;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['companies']['Insert']>;
+        Relationships: [];
+      };
+
+      jobs: {
+        Row: {
+          id: string;
+          company_id: string;
+          external_id: string;
+          title: string;
+          normalized_title: string | null;
+          location: string | null;
+          remote_policy: WorkMode | null;
+          description: string;
+          description_hash: string;
+          salary_min: number | null;
+          salary_max: number | null;
+          salary_currency: string | null;
+          apply_url: string;
+          posted_at: string | null;
+          first_seen_at: string;
+          last_seen_at: string;
+          status: string;
+          canonical_job_id: string | null;
+          raw_payload: Json | null;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          company_id: string;
+          external_id: string;
+          title: string;
+          normalized_title?: string | null;
+          location?: string | null;
+          remote_policy?: WorkMode | null;
+          description: string;
+          description_hash: string;
+          salary_min?: number | null;
+          salary_max?: number | null;
+          salary_currency?: string | null;
+          apply_url: string;
+          posted_at?: string | null;
+          first_seen_at?: string;
+          last_seen_at?: string;
+          status?: string;
+          canonical_job_id?: string | null;
+          raw_payload?: Json | null;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['jobs']['Insert']>;
+        Relationships: [];
+      };
+
+      job_crawl_runs: {
+        Row: {
+          id: string;
+          company_id: string | null;
+          started_at: string;
+          completed_at: string | null;
+          jobs_found: number | null;
+          jobs_new: number | null;
+          jobs_updated: number | null;
+          error: string | null;
+        };
+        Insert: {
+          id?: string;
+          company_id?: string | null;
+          started_at?: string;
+          completed_at?: string | null;
+          jobs_found?: number | null;
+          jobs_new?: number | null;
+          jobs_updated?: number | null;
+          error?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['job_crawl_runs']['Insert']>;
+        Relationships: [];
+      };
+
+      // ---- Phase 4 ----
+      job_embeddings: {
+        Row: {
+          job_id: string;
+          jd_embedding: string; // pgvector serialized
+          parsed_jd: Json;
+        } & Timestamped;
+        Insert: {
+          job_id: string;
+          jd_embedding: string;
+          parsed_jd: Json;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['job_embeddings']['Insert']>;
+        Relationships: [];
+      };
+
+      job_scores: {
+        Row: {
+          id: string;
+          user_id: string;
+          job_id: string;
+          profile_version_hash: string;
+          hard_filter_pass: boolean;
+          hard_filter_reasons: string[] | null;
+          semantic_score: number | null;
+          overall_score: number | null;
+          dimensions: Json | null;
+          must_have_gaps: string[] | null;
+          judge_reasoning: string | null;
+          tier: 'auto_apply' | 'pending_review' | 'needs_decision' | 'low_fit' | 'rejected';
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          job_id: string;
+          profile_version_hash: string;
+          hard_filter_pass: boolean;
+          hard_filter_reasons?: string[] | null;
+          semantic_score?: number | null;
+          overall_score?: number | null;
+          dimensions?: Json | null;
+          must_have_gaps?: string[] | null;
+          judge_reasoning?: string | null;
+          tier: 'auto_apply' | 'pending_review' | 'needs_decision' | 'low_fit' | 'rejected';
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['job_scores']['Insert']>;
+        Relationships: [];
+      };
+
+      // ---- Phase 5 ----
+      tailored_resumes: {
+        Row: {
+          id: string;
+          user_id: string;
+          job_id: string;
+          profile_version_hash: string;
+          prompt_version: string;
+          llm_model: string;
+          resume_json: Json;
+          pdf_url: string | null;
+          docx_url: string | null;
+          honesty_check_passed: boolean;
+          honesty_violations: string[] | null;
+          regeneration_count: number;
+          tokens_in: number | null;
+          tokens_out: number | null;
+          cost_usd: number | null;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          job_id: string;
+          profile_version_hash: string;
+          prompt_version: string;
+          llm_model: string;
+          resume_json: Json;
+          pdf_url?: string | null;
+          docx_url?: string | null;
+          honesty_check_passed: boolean;
+          honesty_violations?: string[] | null;
+          regeneration_count?: number;
+          tokens_in?: number | null;
+          tokens_out?: number | null;
+          cost_usd?: number | null;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['tailored_resumes']['Insert']>;
+        Relationships: [];
+      };
+
+      // ---- Phase 6 ----
+      verifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          tailored_resume_id: string;
+          overall_score: number;
+          parse_agreement_score: number;
+          keyword_coverage_score: number;
+          format_compliance_score: number;
+          parser_results: Json;
+          missing_keywords: string[] | null;
+          format_issues: string[] | null;
+          passed: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          tailored_resume_id: string;
+          overall_score: number;
+          parse_agreement_score: number;
+          keyword_coverage_score: number;
+          format_compliance_score: number;
+          parser_results: Json;
+          missing_keywords?: string[] | null;
+          format_issues?: string[] | null;
+          passed: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['verifications']['Insert']>;
+        Relationships: [];
+      };
+
+      // ---- Phase 7 ----
+      cover_letters: {
+        Row: {
+          id: string;
+          user_id: string;
+          tailored_resume_id: string;
+          prompt_version: string;
+          llm_model: string;
+          greeting: string | null;
+          body: string;
+          signoff: string | null;
+          word_count: number | null;
+          honesty_check_passed: boolean;
+          tokens_in: number | null;
+          tokens_out: number | null;
+          cost_usd: number | null;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          tailored_resume_id: string;
+          prompt_version: string;
+          llm_model: string;
+          greeting?: string | null;
+          body: string;
+          signoff?: string | null;
+          word_count?: number | null;
+          honesty_check_passed: boolean;
+          tokens_in?: number | null;
+          tokens_out?: number | null;
+          cost_usd?: number | null;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['cover_letters']['Insert']>;
+        Relationships: [];
+      };
+
+      question_answers: {
+        Row: {
+          id: string;
+          user_id: string;
+          job_id: string;
+          tailored_resume_id: string | null;
+          question_hash: string;
+          question_text: string;
+          question_type: string;
+          word_limit: number | null;
+          answer_text: string;
+          source: string;
+          confidence: number | null;
+          consistency_check_passed: boolean | null;
+          consistency_violations: string[] | null;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          job_id: string;
+          tailored_resume_id?: string | null;
+          question_hash: string;
+          question_text: string;
+          question_type: string;
+          word_limit?: number | null;
+          answer_text: string;
+          source: string;
+          confidence?: number | null;
+          consistency_check_passed?: boolean | null;
+          consistency_violations?: string[] | null;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['question_answers']['Insert']>;
+        Relationships: [];
+      };
+
+      answer_cache: {
+        Row: {
+          id: string;
+          user_id: string;
+          question_hash: string;
+          question_text: string;
+          answer_text: string;
+          context_fingerprint: string | null;
+          hit_count: number;
+          last_used_at: string;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          question_hash: string;
+          question_text: string;
+          answer_text: string;
+          context_fingerprint?: string | null;
+          hit_count?: number;
+          last_used_at?: string;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['answer_cache']['Insert']>;
+        Relationships: [];
+      };
+
+      // ---- Phase 8 ----
+      submissions: {
+        Row: {
+          id: string;
+          user_id: string;
+          job_id: string;
+          tailored_resume_id: string;
+          cover_letter_id: string | null;
+          method: SubmitMethod;
+          status: SubmitStatus;
+          submitted_at: string | null;
+          external_confirmation_id: string | null;
+        } & Timestamped;
+        Insert: {
+          id?: string;
+          user_id: string;
+          job_id: string;
+          tailored_resume_id: string;
+          cover_letter_id?: string | null;
+          method: SubmitMethod;
+          status?: SubmitStatus;
+          submitted_at?: string | null;
+          external_confirmation_id?: string | null;
+        } & TimestampedInsert;
+        Update: Partial<Database['public']['Tables']['submissions']['Insert']>;
+        Relationships: [];
+      };
+
+      submission_attempts: {
+        Row: {
+          id: string;
+          submission_id: string;
+          attempt_number: number;
+          method: SubmitMethod;
+          success: boolean;
+          request_payload: Json | null;
+          response_payload: Json | null;
+          screenshots: string[] | null;
+          error_message: string | null;
+          error_stack: string | null;
+          duration_ms: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          submission_id: string;
+          attempt_number: number;
+          method: SubmitMethod;
+          success: boolean;
+          request_payload?: Json | null;
+          response_payload?: Json | null;
+          screenshots?: string[] | null;
+          error_message?: string | null;
+          error_stack?: string | null;
+          duration_ms?: number | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['submission_attempts']['Insert']>;
+        Relationships: [];
+      };
+
+      manual_review_queue: {
+        Row: {
+          id: string;
+          user_id: string;
+          submission_id: string;
+          reason: string;
+          context: Json | null;
+          screenshots: string[] | null;
+          resolved_at: string | null;
+          resolution: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          submission_id: string;
+          reason: string;
+          context?: Json | null;
+          screenshots?: string[] | null;
+          resolved_at?: string | null;
+          resolution?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['manual_review_queue']['Insert']>;
+        Relationships: [];
+      };
+
+      // ---- Phase 9 ----
+      outcomes: {
+        Row: {
+          id: string;
+          user_id: string;
+          submission_id: string;
+          stage: OutcomeType;
+          reached_at: string;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          submission_id: string;
+          stage: OutcomeType;
+          reached_at: string;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['outcomes']['Insert']>;
+        Relationships: [];
+      };
+
+      outcome_events: {
+        Row: {
+          id: string;
+          user_id: string;
+          submission_id: string | null;
+          source: string;
+          outcome_type: OutcomeType;
+          confidence: number | null;
+          payload: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          submission_id?: string | null;
+          source: string;
+          outcome_type: OutcomeType;
+          confidence?: number | null;
+          payload?: Json | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['outcome_events']['Insert']>;
+        Relationships: [];
+      };
+    };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: {
+      experience_level: ExperienceLevel;
+      work_mode: WorkMode;
+      job_type: JobType;
+      skill_category: SkillCategory;
+      story_dimension: StoryDimension;
+      ats_type: AtsType;
+      submit_method: SubmitMethod;
+      submit_status: SubmitStatus;
+      outcome_type: OutcomeType;
+    };
+    CompositeTypes: Record<string, never>;
+  };
+}
