@@ -908,6 +908,88 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['outcome_events']['Insert']>;
         Relationships: [];
       };
+
+      // ---- Phase 11 ----
+      kv_store: {
+        Row: {
+          key: string;
+          value: Json;
+          expires_at: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          key: string;
+          value: Json;
+          expires_at?: string | null;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['kv_store']['Insert']>;
+        Relationships: [];
+      };
+
+      llm_calls: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          provider: string;
+          model: string;
+          task: string;
+          prompt_version: string | null;
+          tokens_in: number;
+          tokens_out: number;
+          cached_tokens: number;
+          cost_usd: number;
+          latency_ms: number | null;
+          success: boolean;
+          error_code: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          provider: string;
+          model: string;
+          task: string;
+          prompt_version?: string | null;
+          tokens_in: number;
+          tokens_out: number;
+          cached_tokens?: number;
+          cost_usd: number;
+          latency_ms?: number | null;
+          success: boolean;
+          error_code?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['llm_calls']['Insert']>;
+        Relationships: [];
+      };
+
+      daily_cost_summary: {
+        Row: {
+          day: string;
+          user_id: string | null;
+          provider: string;
+          model: string;
+          task: string;
+          total_tokens_in: number;
+          total_tokens_out: number;
+          total_cost_usd: number;
+          call_count: number;
+        };
+        Insert: {
+          day: string;
+          user_id?: string | null;
+          provider: string;
+          model: string;
+          task: string;
+          total_tokens_in: number;
+          total_tokens_out: number;
+          total_cost_usd: number;
+          call_count: number;
+        };
+        Update: Partial<Database['public']['Tables']['daily_cost_summary']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
