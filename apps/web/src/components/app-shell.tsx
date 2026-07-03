@@ -6,6 +6,7 @@ import type { Route } from 'next';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
+import { CommandPaletteTrigger } from './command-palette';
 import {
   IconHome,
   IconInbox,
@@ -182,7 +183,9 @@ function TopBar({
         <IconMenu className="size-4" />
       </button>
 
-      <div className="flex flex-1 items-center gap-3">{actions}</div>
+      <CommandPaletteTrigger className="w-full max-w-md flex-1 sm:w-64" />
+
+      <div className="flex items-center gap-2">{actions}</div>
 
       <ThemeToggle />
 

@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from 'next';
 import { Fira_Sans, Fira_Code } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
+import { CommandPaletteProvider } from '@/components/command-palette';
+import { ToastProvider } from '@/components/ui/toast';
+import { ShortcutsHelp } from '@/components/shortcuts-help';
 
 const firaSans = Fira_Sans({
   subsets: ['latin'],
@@ -38,7 +41,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning className={`${firaSans.variable} ${firaCode.variable}`}>
       <body className="min-h-screen bg-background font-sans text-foreground">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <CommandPaletteProvider>
+              {children}
+              <ShortcutsHelp />
+            </CommandPaletteProvider>
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
