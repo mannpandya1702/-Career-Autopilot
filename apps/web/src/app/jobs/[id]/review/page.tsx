@@ -5,9 +5,11 @@ import { getLatestTailoredResume } from '@/lib/jobs/tailored';
 import { getLatestVerification } from '@/lib/jobs/verifications';
 import { getLatestCoverLetter } from '@/lib/jobs/cover-letter';
 import { listAnswersForJob } from '@/lib/jobs/qa';
+import { AppShell } from '@/components/app-shell';
+import { SignOutButton } from '@/app/app/sign-out-button';
 import { ReviewWorkspace } from './ReviewWorkspace';
 
-export const metadata = { title: 'Review — Career Autopilot' };
+export const metadata = { title: 'Review' };
 
 interface ReviewPageProps {
   params: Promise<{ id: string }>;
@@ -32,12 +34,14 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
   ]);
 
   return (
-    <ReviewWorkspace
-      job={job}
-      tailored={tailored}
-      verification={verification}
-      coverLetter={coverLetter}
-      answers={answers}
-    />
+    <AppShell userEmail={user.email ?? null} headerActions={<SignOutButton />}>
+      <ReviewWorkspace
+        job={job}
+        tailored={tailored}
+        verification={verification}
+        coverLetter={coverLetter}
+        answers={answers}
+      />
+    </AppShell>
   );
 }

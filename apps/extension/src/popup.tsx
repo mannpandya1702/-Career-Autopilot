@@ -8,6 +8,23 @@ import type { ExtensionMessage, ExtensionResponse } from './types';
 const APP_BASE =
   process.env['PLASMO_PUBLIC_APP_BASE_URL'] ?? 'http://localhost:3000';
 
+// Career Autopilot palette (light-mode teal + orange), inlined so the popup
+// doesn't need Tailwind. Kept in sync with apps/web/src/app/globals.css.
+const T = {
+  bg: '#F0FDFA',
+  surface: '#FFFFFF',
+  fg: '#134E4A',
+  muted: '#4A6B69',
+  border: '#99F6E4',
+  primary: '#0D9488',
+  primaryFg: '#F0FDFA',
+  accent: '#EA580C',
+  success: '#059669',
+};
+
+const FONT_STACK =
+  '"Fira Sans", system-ui, -apple-system, "Segoe UI", sans-serif';
+
 interface AuthStatus {
   signed_in: boolean;
   email: string | null;
@@ -46,8 +63,6 @@ export default function Popup() {
         setMessage('No active tab');
         return;
       }
-      // Send through the active tab's content script so it can extract
-      // the current job and apply the autofill report itself.
       const resp: ExtensionResponse = await new Promise((resolve) => {
         chrome.tabs.sendMessage(
           tab.id!,
@@ -58,7 +73,7 @@ export default function Popup() {
         );
       });
       if (resp.kind === 'easy_apply_ok') {
-        setMessage('Filled — review every field before clicking submit yourself.');
+        setMessage('Filled — review every field before you click submit yourself.');
       } else if (resp.kind === 'error') {
         setMessage(`Error: ${resp.message}`);
       }
@@ -70,25 +85,94 @@ export default function Popup() {
   return (
     <main
       style={{
-        width: '320px',
-        padding: '14px',
-        fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
+        width: '340px',
+        padding: '16px',
+        fontFamily: FONT_STACK,
         fontSize: '13px',
-        background: '#fff',
-        color: '#111827',
+        lineHeight: 1.45,
+        background: T.bg,
+        color: T.fg,
       }}
     >
-      <header style={{ marginBottom: '10px' }}>
-        <strong>Career Autopilot</strong>
-        <div style={{ fontSize: '11px', color: '#6b7280' }}>
-          LinkedIn + Indeed assistant
+      <header
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          marginBottom: '14px',
+        }}
+      >
+        <div
+          style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '8px',
+            background: T.primary,
+            color: T.primaryFg,
+            display: 'grid',
+            placeItems: 'center',
+            fontFamily: '"Fira Code", monospace',
+            fontWeight: 700,
+            fontSize: '14px',
+            boxShadow: '0 2px 8px rgba(13, 148, 136, 0.25)',
+          }}
+          aria-hidden="true"
+        >
+          {'>'}
+        </div>
+        <div>
+          <div
+            style={{
+              fontFamily: '"Fira Code", monospace',
+              fontWeight: 600,
+              fontSize: '13px',
+              color: T.fg,
+            }}
+          >
+            career.autopilot
+          </div>
+          <div style={{ fontSize: '11px', color: T.muted }}>
+            LinkedIn + Indeed assistant
+          </div>
         </div>
       </header>
 
       {status?.signed_in ? (
         <section>
-          <div style={{ marginBottom: '8px', color: '#374151' }}>
-            Signed in as <strong>{status.email ?? 'you'}</strong>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 10px',
+              marginBottom: '12px',
+              background: T.surface,
+              border: `1px solid ${T.border}`,
+              borderRadius: '8px',
+              fontSize: '12px',
+            }}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                width: '6px',
+                height: '6px',
+                borderRadius: '999px',
+                background: T.success,
+              }}
+              aria-hidden="true"
+            />
+            <span
+              style={{
+                fontFamily: '"Fira Code", monospace',
+                color: T.fg,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {status.email ?? 'signed in'}
+            </span>
           </div>
           <button
             type="button"
@@ -96,27 +180,43 @@ export default function Popup() {
             onClick={() => void tailorAndAutofill()}
             style={primaryButtonStyle(busy)}
           >
-            {busy ? 'Working…' : 'Tailor + autofill (review before submit)'}
+            {busy ? 'Working…' : 'Tailor + autofill'}
           </button>
-          <a href={APP_BASE} target="_blank" rel="noopener noreferrer" style={linkStyle}>
-            Open Career Autopilot
-          </a>
-          <button
-            type="button"
-            onClick={async () => {
-              await send({ kind: 'auth_clear' });
-              await refresh();
+          <p style={{ fontSize: '11px', color: T.muted, margin: '6px 0 0' }}>
+            Review every field before you click submit yourself.
+          </p>
+          <div
+            style={{
+              display: 'flex',
+              gap: '6px',
+              marginTop: '12px',
             }}
-            style={secondaryButtonStyle}
           >
-            Sign out
-          </button>
+            <a
+              href={APP_BASE}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={secondaryAnchorStyle}
+            >
+              Open workspace
+            </a>
+            <button
+              type="button"
+              onClick={async () => {
+                await send({ kind: 'auth_clear' });
+                await refresh();
+              }}
+              style={secondaryButtonStyle}
+            >
+              Sign out
+            </button>
+          </div>
         </section>
       ) : (
         <section>
-          <p style={{ color: '#374151', marginBottom: '10px' }}>
-            Sign in to score jobs you view on LinkedIn / Indeed and to use the
-            tailor + autofill assist.
+          <p style={{ color: T.fg, marginBottom: '12px', fontSize: '12px' }}>
+            Sign in to score jobs you view on LinkedIn or Indeed and use the tailor +
+            autofill assist.
           </p>
           <a
             href={`${APP_BASE}/auth/extension`}
@@ -129,21 +229,33 @@ export default function Popup() {
         </section>
       )}
 
-      {message && (
-        <p style={{ marginTop: '10px', color: '#374151' }}>{message}</p>
-      )}
+      {message ? (
+        <div
+          role="status"
+          style={{
+            marginTop: '12px',
+            padding: '8px 10px',
+            background: T.surface,
+            border: `1px solid ${T.border}`,
+            borderRadius: '8px',
+            color: T.fg,
+            fontSize: '12px',
+          }}
+        >
+          {message}
+        </div>
+      ) : null}
 
       <p
         style={{
           marginTop: '14px',
           paddingTop: '10px',
-          borderTop: '1px solid #e5e7eb',
+          borderTop: `1px solid ${T.border}`,
           fontSize: '11px',
-          color: '#6b7280',
+          color: T.muted,
         }}
       >
-        We never submit on LinkedIn for you — you click the final button. Per
-        their ToS this is the only safe path.
+        We never submit on LinkedIn for you — you always click the final button.
       </p>
     </main>
   );
@@ -153,47 +265,55 @@ function primaryButtonStyle(disabled: boolean): React.CSSProperties {
   return {
     display: 'block',
     width: '100%',
-    padding: '8px 12px',
-    background: disabled ? '#9ca3af' : '#111827',
-    color: 'white',
+    padding: '9px 12px',
+    background: disabled ? '#5EEAD4' : T.primary,
+    color: T.primaryFg,
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '8px',
     fontSize: '13px',
     fontWeight: 500,
+    letterSpacing: '-0.005em',
     cursor: disabled ? 'not-allowed' : 'pointer',
-    marginBottom: '8px',
+    boxShadow: disabled ? 'none' : '0 2px 8px rgba(13, 148, 136, 0.25)',
+    transition: 'background 120ms ease-out',
   };
 }
 
 const primaryAnchorStyle: React.CSSProperties = {
   display: 'block',
   textAlign: 'center',
-  padding: '8px 12px',
-  background: '#111827',
-  color: 'white',
-  borderRadius: '6px',
+  padding: '9px 12px',
+  background: T.primary,
+  color: T.primaryFg,
+  borderRadius: '8px',
   textDecoration: 'none',
   fontWeight: 500,
+  fontSize: '13px',
+  boxShadow: '0 2px 8px rgba(13, 148, 136, 0.25)',
+};
+
+const secondaryAnchorStyle: React.CSSProperties = {
+  flex: 1,
+  display: 'inline-block',
+  textAlign: 'center',
+  padding: '7px 10px',
+  background: T.surface,
+  color: T.fg,
+  border: `1px solid ${T.border}`,
+  borderRadius: '6px',
+  fontSize: '12px',
+  textDecoration: 'none',
 };
 
 const secondaryButtonStyle: React.CSSProperties = {
-  display: 'block',
-  width: '100%',
-  padding: '6px 10px',
-  marginTop: '4px',
-  background: 'white',
-  color: '#374151',
-  border: '1px solid #d1d5db',
+  flex: 1,
+  display: 'inline-block',
+  textAlign: 'center',
+  padding: '7px 10px',
+  background: T.surface,
+  color: T.muted,
+  border: `1px solid ${T.border}`,
   borderRadius: '6px',
   fontSize: '12px',
   cursor: 'pointer',
-};
-
-const linkStyle: React.CSSProperties = {
-  display: 'block',
-  textAlign: 'center',
-  padding: '6px',
-  color: '#1d4ed8',
-  fontSize: '12px',
-  textDecoration: 'underline',
 };

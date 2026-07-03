@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { Button } from '@/components/ui/button';
+import { IconLogOut } from '@/components/ui/icons';
 
 export function SignOutButton() {
   const router = useRouter();
@@ -18,13 +20,9 @@ export function SignOutButton() {
   }
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={isPending}
-      className="rounded-md border border-border bg-white px-3 py-2 text-sm font-medium text-foreground disabled:opacity-60"
-    >
-      {isPending ? 'Signing out…' : 'Sign out'}
-    </button>
+    <Button type="button" variant="secondary" size="sm" onClick={onClick} loading={isPending}>
+      {isPending ? 'Signing out' : 'Sign out'}
+      {!isPending ? <IconLogOut /> : null}
+    </Button>
   );
 }

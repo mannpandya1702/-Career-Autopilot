@@ -1,10 +1,12 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { loadFullProfileForUser } from '@/lib/profile/queries';
+import { AppShell, PageHeader } from '@/components/app-shell';
+import { SignOutButton } from '@/app/app/sign-out-button';
 import { OnboardingWizard } from './OnboardingWizard';
 import type { OnboardingInitialData } from './wizard-types';
 
-export const metadata = { title: 'Onboarding — Career Autopilot' };
+export const metadata = { title: 'Onboarding' };
 
 export default async function OnboardingPage() {
   const supabase = await createClient();
@@ -37,5 +39,14 @@ export default async function OnboardingPage() {
         questionBank: [],
       };
 
-  return <OnboardingWizard initial={initial} />;
+  return (
+    <AppShell userEmail={user.email ?? null} headerActions={<SignOutButton />}>
+      <PageHeader
+        eyebrow="First run"
+        title="Set up your master profile"
+        description="Six steps. Import once, then let the tailor draw from what's real."
+      />
+      <OnboardingWizard initial={initial} />
+    </AppShell>
+  );
 }

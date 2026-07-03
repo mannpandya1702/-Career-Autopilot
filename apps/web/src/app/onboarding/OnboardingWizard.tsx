@@ -21,8 +21,17 @@ import {
   upsertSkillAction,
 } from './actions';
 import { WIZARD_STEPS, type OnboardingInitialData, type WizardStep } from './wizard-types';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input, Textarea, Label, HelperText } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { IconCheck, IconAlert, IconArrowRight, IconX, IconFileText } from '@/components/ui/icons';
 
 type Status = { state: 'idle' | 'saving' | 'ok' | 'error'; message?: string };
+
+const SELECT_CLASSES =
+  'flex h-9 w-full rounded-md border border-input bg-surface px-3 py-1.5 text-sm text-foreground shadow-elevation-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 export function OnboardingWizard({ initial }: { initial: OnboardingInitialData }) {
   const [current, setCurrent] = useState<WizardStep>(() => {
@@ -49,51 +58,24 @@ export function OnboardingWizard({ initial }: { initial: OnboardingInitialData }
   };
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 px-6 py-10">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Onboarding</h1>
-        <ol className="flex flex-wrap gap-2 text-xs">
-          {WIZARD_STEPS.map((step, i) => {
-            const done = i < currentIdx;
-            const active = i === currentIdx;
-            return (
-              <li
-                key={step.key}
-                className={[
-                  'rounded-full border px-3 py-1',
-                  active
-                    ? 'border-foreground bg-foreground text-background'
-                    : done
-                      ? 'border-green-600 text-green-700'
-                      : 'border-border text-muted-foreground',
-                ].join(' ')}
-              >
-                {i + 1}. {step.label}
-              </li>
-            );
-          })}
-        </ol>
-        <p className="text-sm text-muted-foreground">
-          {WIZARD_STEPS[currentIdx]?.helper}
-        </p>
-      </header>
+    <div className="flex flex-col gap-5">
+      <Stepper current={current} onSelect={setCurrent} />
 
-      {status.state === 'error' && (
-        <div className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
-          {status.message}
-        </div>
-      )}
-      {status.state === 'ok' && (
-        <div className="rounded-md border border-green-300 bg-green-50 p-3 text-sm text-green-700">
-          {status.message ?? 'Saved.'}
-        </div>
-      )}
+      {status.state === 'error' ? (
+        <StatusBanner tone="error" message={status.message ?? 'Something went wrong'} />
+      ) : null}
+      {status.state === 'ok' ? (
+        <StatusBanner tone="success" message={status.message ?? 'Saved'} />
+      ) : null}
 
-      {current === 'import' && (
+      {current === 'import' ? (
         <ImportStep
           onParsed={(p) => {
             setParsed(p);
-            setStatus({ state: 'ok', message: 'Resume parsed — review extracted fields below.' });
+            setStatus({
+              state: 'ok',
+              message: 'Résumé parsed — review the extracted fields below.',
+            });
           }}
           onSaveProfile={async (input) => {
             setStatus({ state: 'saving' });
@@ -106,22 +88,24 @@ export function OnboardingWizard({ initial }: { initial: OnboardingInitialData }
           parsed={parsed}
           initialProfile={initial.profile}
         />
-      )}
+      ) : null}
 
-      {current === 'review' && (
+      {current === 'review' ? (
         <ReviewStep
           profileId={profileId}
           parsed={parsed}
           existing={initial.experiences}
           onAdd={async (exp, bullets) => {
-            if (!profileId) return setStatus({ state: 'error', message: 'Profile not saved yet.' });
+            if (!profileId)
+              return setStatus({ state: 'error', message: 'Profile not saved yet.' });
             setStatus({ state: 'saving' });
             const res = await addExperienceAction(profileId, exp, bullets);
             if (!res.ok) return setStatus({ state: 'error', message: res.error });
             setStatus({ state: 'ok', message: 'Experience added.' });
           }}
           onAddEducation={async (edu) => {
-            if (!profileId) return setStatus({ state: 'error', message: 'Profile not saved yet.' });
+            if (!profileId)
+              return setStatus({ state: 'error', message: 'Profile not saved yet.' });
             setStatus({ state: 'saving' });
             const res = await addEducationAction(profileId, edu);
             if (!res.ok) return setStatus({ state: 'error', message: res.error });
@@ -129,9 +113,9 @@ export function OnboardingWizard({ initial }: { initial: OnboardingInitialData }
           }}
           onNext={goNext}
         />
-      )}
+      ) : null}
 
-      {current === 'skills' && (
+      {current === 'skills' ? (
         <SkillsStep
           initial={initial.skills}
           parsed={parsed}
@@ -149,9 +133,9 @@ export function OnboardingWizard({ initial }: { initial: OnboardingInitialData }
           }}
           onNext={goNext}
         />
-      )}
+      ) : null}
 
-      {current === 'preferences' && (
+      {current === 'preferences' ? (
         <PreferencesStep
           initial={initial.preferences}
           onSave={async (input) => {
@@ -162,14 +146,15 @@ export function OnboardingWizard({ initial }: { initial: OnboardingInitialData }
             goNext();
           }}
         />
-      )}
+      ) : null}
 
-      {current === 'stories' && (
+      {current === 'stories' ? (
         <StoriesStep
           profileId={profileId}
           existing={initial.stories.length}
           onAdd={async (input) => {
-            if (!profileId) return setStatus({ state: 'error', message: 'Profile not saved yet.' });
+            if (!profileId)
+              return setStatus({ state: 'error', message: 'Profile not saved yet.' });
             setStatus({ state: 'saving' });
             const res = await addStoryAction(profileId, input);
             if (!res.ok) return setStatus({ state: 'error', message: res.error });
@@ -177,9 +162,9 @@ export function OnboardingWizard({ initial }: { initial: OnboardingInitialData }
           }}
           onNext={goNext}
         />
-      )}
+      ) : null}
 
-      {current === 'questions' && (
+      {current === 'questions' ? (
         <QuestionsStep
           initial={initial.questionBank}
           onSave={async (input) => {
@@ -195,12 +180,88 @@ export function OnboardingWizard({ initial }: { initial: OnboardingInitialData }
             setStatus({ state: 'ok', message: 'Onboarding complete.' });
           }}
         />
-      )}
+      ) : null}
     </div>
   );
 }
 
-// ------------------- Step 1: Import -------------------
+function Stepper({
+  current,
+  onSelect,
+}: {
+  current: WizardStep;
+  onSelect: (s: WizardStep) => void;
+}) {
+  const currentIdx = WIZARD_STEPS.findIndex((s) => s.key === current);
+  return (
+    <div className="rounded-lg border border-border bg-surface p-4 shadow-elevation-1">
+      <ol className="flex flex-wrap items-center gap-2">
+        {WIZARD_STEPS.map((step, i) => {
+          const done = i < currentIdx;
+          const active = i === currentIdx;
+          return (
+            <li key={step.key} className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onSelect(step.key)}
+                aria-current={active ? 'step' : undefined}
+                className={cn(
+                  'inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                  active
+                    ? 'bg-primary text-primary-foreground shadow-elevation-1'
+                    : done
+                      ? 'bg-success/10 text-success hover:bg-success/15'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                )}
+              >
+                <span
+                  className={cn(
+                    'grid size-4 place-items-center rounded-full text-2xs',
+                    active
+                      ? 'bg-primary-foreground/20'
+                      : done
+                        ? 'bg-success text-success-foreground'
+                        : 'bg-muted text-muted-foreground',
+                  )}
+                >
+                  {done ? <IconCheck className="size-2.5" /> : <span>{i + 1}</span>}
+                </span>
+                {step.label}
+              </button>
+              {i < WIZARD_STEPS.length - 1 ? (
+                <span className="text-muted-foreground/60">·</span>
+              ) : null}
+            </li>
+          );
+        })}
+      </ol>
+      <p className="mt-3 text-sm text-muted-foreground">{WIZARD_STEPS[currentIdx]?.helper}</p>
+    </div>
+  );
+}
+
+function StatusBanner({ tone, message }: { tone: 'error' | 'success'; message: string }) {
+  const styles =
+    tone === 'error'
+      ? 'border-destructive/30 bg-destructive/5 text-destructive'
+      : 'border-success/30 bg-success/5 text-success';
+  const Icon = tone === 'error' ? IconAlert : IconCheck;
+  return (
+    <div
+      role={tone === 'error' ? 'alert' : 'status'}
+      className={cn(
+        'flex items-center gap-2 rounded-md border px-3 py-2 text-sm animate-fade-in',
+        styles,
+      )}
+    >
+      <Icon className="size-4 shrink-0" />
+      <span>{message}</span>
+    </div>
+  );
+}
+
+/* ---------------------- Step 1: Import ---------------------- */
+
 function ImportStep({
   onParsed,
   onSaveProfile,
@@ -230,12 +291,8 @@ function ImportStep({
   const [portfolio, setPortfolio] = useState(
     initialProfile?.portfolio_url ?? initial.portfolio_url ?? '',
   );
-  const [headline, setHeadline] = useState(
-    initialProfile?.headline ?? initial.headline ?? '',
-  );
-  const [summary, setSummary] = useState(
-    initialProfile?.summary ?? parsed?.summary ?? '',
-  );
+  const [headline, setHeadline] = useState(initialProfile?.headline ?? initial.headline ?? '');
+  const [summary, setSummary] = useState(initialProfile?.summary ?? parsed?.summary ?? '');
 
   async function upload(file: File, source: 'resume_pdf' | 'linkedin_pdf') {
     setError(null);
@@ -266,139 +323,140 @@ function ImportStep({
   }
 
   return (
-    <section className="flex flex-col gap-6">
-      <div className="rounded-md border border-dashed border-border p-4">
-        <h2 className="text-sm font-medium">Upload resume PDF</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          We extract contact info, experience, education, and skills. You review before saving.
-        </p>
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-          <label className="inline-flex cursor-pointer items-center justify-center rounded border border-border px-3 py-2 text-sm">
-            <input
-              type="file"
-              accept="application/pdf"
-              className="sr-only"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void upload(f, 'resume_pdf');
-              }}
+    <div className="grid gap-4 lg:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <IconFileText className="size-4 text-primary" /> Upload résumé
+          </CardTitle>
+          <CardDescription>
+            We extract contact info, experience, education, and skills. You review before saving.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <FileUpload label="Résumé PDF" onFile={(f) => void upload(f, 'resume_pdf')} />
+            <FileUpload
+              label="LinkedIn export (optional)"
+              onFile={(f) => void upload(f, 'linkedin_pdf')}
             />
-            Choose resume PDF
-          </label>
-          <label className="inline-flex cursor-pointer items-center justify-center rounded border border-border px-3 py-2 text-sm">
-            <input
-              type="file"
-              accept="application/pdf"
-              className="sr-only"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void upload(f, 'linkedin_pdf');
-              }}
-            />
-            LinkedIn export (optional)
-          </label>
-        </div>
-        {uploading && <p className="mt-2 text-xs text-muted-foreground">Parsing…</p>}
-        {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
-        {parsed && (
-          <p className="mt-2 text-xs text-green-700">
-            Parsed: {parsed.experiences.length} experiences, {parsed.skills.length} skills,
-            {parsed.education.length} education entries.
-            {parsed.warnings.length > 0 && ` ${parsed.warnings.length} warnings.`}
-          </p>
-        )}
-      </div>
+          </div>
+          {uploading ? (
+            <p className="text-xs text-muted-foreground">Parsing…</p>
+          ) : null}
+          {error ? (
+            <p className="text-xs text-destructive">{error}</p>
+          ) : null}
+          {parsed ? (
+            <p className="text-xs text-success">
+              Parsed: {parsed.experiences.length} experiences, {parsed.skills.length} skills,{' '}
+              {parsed.education.length} education entries.
+              {parsed.warnings.length > 0 ? ` ${parsed.warnings.length} warnings.` : ''}
+            </p>
+          ) : null}
+        </CardContent>
+      </Card>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const payload = {
-            full_name: fullName.trim(),
-            email: email.trim(),
-            phone: phone.trim() || null,
-            location: location.trim() || null,
-            linkedin_url: linkedin.trim() || null,
-            github_url: github.trim() || null,
-            portfolio_url: portfolio.trim() || null,
-            headline: headline.trim() || null,
-            summary: summary.trim() || null,
-          };
-          startTransition(() => {
-            void onSaveProfile(payload);
-          });
-        }}
-        className="grid grid-cols-1 gap-3 sm:grid-cols-2"
-      >
-        <Field label="Full name" required>
-          <input
-            required
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            className="input"
-          />
-        </Field>
-        <Field label="Email" required>
-          <input
-            required
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="input"
-          />
-        </Field>
-        <Field label="Phone">
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} className="input" />
-        </Field>
-        <Field label="Location">
-          <input
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="input"
-          />
-        </Field>
-        <Field label="LinkedIn URL">
-          <input
-            value={linkedin}
-            onChange={(e) => setLinkedin(e.target.value)}
-            className="input"
-          />
-        </Field>
-        <Field label="GitHub URL">
-          <input value={github} onChange={(e) => setGithub(e.target.value)} className="input" />
-        </Field>
-        <Field label="Portfolio URL">
-          <input
-            value={portfolio}
-            onChange={(e) => setPortfolio(e.target.value)}
-            className="input"
-          />
-        </Field>
-        <Field label="Headline">
-          <input
-            value={headline}
-            onChange={(e) => setHeadline(e.target.value)}
-            className="input"
-          />
-        </Field>
-        <Field label="Summary" className="sm:col-span-2">
-          <textarea
-            value={summary}
-            onChange={(e) => setSummary(e.target.value)}
-            rows={4}
-            className="input"
-          />
-        </Field>
-        <div className="sm:col-span-2">
-          <button type="submit" disabled={isPending} className="btn-primary">
-            {isPending ? 'Saving…' : 'Save and continue'}
-          </button>
-        </div>
-      </form>
-    </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>Contact details</CardTitle>
+          <CardDescription>Review and confirm before saving.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const payload = {
+                full_name: fullName.trim(),
+                email: email.trim(),
+                phone: phone.trim() || null,
+                location: location.trim() || null,
+                linkedin_url: linkedin.trim() || null,
+                github_url: github.trim() || null,
+                portfolio_url: portfolio.trim() || null,
+                headline: headline.trim() || null,
+                summary: summary.trim() || null,
+              };
+              startTransition(() => {
+                void onSaveProfile(payload);
+              });
+            }}
+            className="grid gap-3 sm:grid-cols-2"
+          >
+            <div>
+              <Label required>Full name</Label>
+              <Input required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+            </div>
+            <div>
+              <Label required>Email</Label>
+              <Input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            <div>
+              <Label>Phone</Label>
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+            </div>
+            <div>
+              <Label>Location</Label>
+              <Input value={location} onChange={(e) => setLocation(e.target.value)} />
+            </div>
+            <div>
+              <Label>LinkedIn URL</Label>
+              <Input value={linkedin} onChange={(e) => setLinkedin(e.target.value)} />
+            </div>
+            <div>
+              <Label>GitHub URL</Label>
+              <Input value={github} onChange={(e) => setGithub(e.target.value)} />
+            </div>
+            <div>
+              <Label>Portfolio URL</Label>
+              <Input value={portfolio} onChange={(e) => setPortfolio(e.target.value)} />
+            </div>
+            <div>
+              <Label>Headline</Label>
+              <Input value={headline} onChange={(e) => setHeadline(e.target.value)} />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Summary</Label>
+              <Textarea rows={4} value={summary} onChange={(e) => setSummary(e.target.value)} />
+            </div>
+            <div className="sm:col-span-2">
+              <Button type="submit" loading={isPending}>
+                Save and continue <IconArrowRight />
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
-// ------------------- Step 2: Review -------------------
+function FileUpload({
+  label,
+  onFile,
+}: {
+  label: string;
+  onFile: (f: File) => void;
+}) {
+  return (
+    <label className="group inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-border bg-surface px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-primary">
+      <input
+        type="file"
+        accept="application/pdf"
+        className="sr-only"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onFile(f);
+        }}
+      />
+      <IconFileText className="size-4" />
+      <span>{label}</span>
+    </label>
+  );
+}
+
+/* ---------------------- Step 2: Review ---------------------- */
+
 function ReviewStep({
   profileId,
   parsed,
@@ -426,12 +484,7 @@ function ReviewStep({
     description: '',
     bullets: '',
   });
-  const [edu, setEdu] = useState({
-    institution: '',
-    degree: '',
-    field: '',
-    end_date: '',
-  });
+  const [edu, setEdu] = useState({ institution: '', degree: '', field: '', end_date: '' });
 
   function prefillExp(i: number) {
     const e = suggestedExp[i];
@@ -447,208 +500,256 @@ function ReviewStep({
   }
 
   return (
-    <section className="flex flex-col gap-6">
-      {!profileId && (
-        <p className="text-sm text-red-600">
-          Save the profile step before adding experiences.
-        </p>
-      )}
+    <div className="flex flex-col gap-4">
+      {!profileId ? (
+        <StatusBanner tone="error" message="Save the profile step before adding experiences." />
+      ) : null}
 
-      <div className="rounded-md border border-border p-4">
-        <h2 className="text-sm font-medium">Extracted experiences ({suggestedExp.length})</h2>
-        <ul className="mt-2 space-y-1 text-xs">
-          {suggestedExp.map((e, i) => (
-            <li key={i} className="flex items-center justify-between">
-              <span>
-                <strong>{e.title || '(no title)'}</strong> — {e.company}
-              </span>
-              <button
-                type="button"
-                className="text-blue-600 underline"
-                onClick={() => prefillExp(i)}
-              >
-                Use
-              </button>
-            </li>
-          ))}
-          {suggestedExp.length === 0 && (
-            <li className="text-muted-foreground">
-              None detected. Add experiences manually below.
-            </li>
-          )}
-        </ul>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Extracted experiences</CardTitle>
+              <Badge variant="neutral">{suggestedExp.length}</Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {suggestedExp.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                None detected. Add experiences manually.
+              </p>
+            ) : (
+              <ul className="space-y-1 text-sm">
+                {suggestedExp.map((e, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center justify-between gap-2 rounded-md border border-border bg-surface-elevated px-2 py-1.5"
+                  >
+                    <span className="truncate">
+                      <strong className="text-foreground">{e.title || '(no title)'}</strong>{' '}
+                      <span className="text-muted-foreground">— {e.company}</span>
+                    </span>
+                    <Button size="sm" variant="ghost" onClick={() => prefillExp(i)}>
+                      Use
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Add experience</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form
+              onSubmit={(evt) => {
+                evt.preventDefault();
+                const bulletsParsed = exp.bullets
+                  .split('\n')
+                  .map((l) => l.replace(/^[-*•]\s*/, '').trim())
+                  .filter(Boolean)
+                  .map((text, ord) => ({ text, ord }));
+                const payload = {
+                  company: exp.company.trim(),
+                  title: exp.title.trim(),
+                  start_date: exp.start_date,
+                  end_date: exp.end_date || null,
+                  description: exp.description.trim() || null,
+                };
+                startTransition(() => {
+                  void onAdd(payload, bulletsParsed).then(() => {
+                    setExp({
+                      company: '',
+                      title: '',
+                      start_date: '',
+                      end_date: '',
+                      description: '',
+                      bullets: '',
+                    });
+                  });
+                });
+              }}
+              className="grid gap-3 sm:grid-cols-2"
+            >
+              <div>
+                <Label required>Company</Label>
+                <Input
+                  required
+                  value={exp.company}
+                  onChange={(e) => setExp({ ...exp, company: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label required>Title</Label>
+                <Input
+                  required
+                  value={exp.title}
+                  onChange={(e) => setExp({ ...exp, title: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label required>Start date</Label>
+                <Input
+                  required
+                  type="date"
+                  value={exp.start_date}
+                  onChange={(e) => setExp({ ...exp, start_date: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>End (blank = current)</Label>
+                <Input
+                  type="date"
+                  value={exp.end_date}
+                  onChange={(e) => setExp({ ...exp, end_date: e.target.value })}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label>Description</Label>
+                <Textarea
+                  rows={2}
+                  value={exp.description}
+                  onChange={(e) => setExp({ ...exp, description: e.target.value })}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label>Bullets (one per line)</Label>
+                <Textarea
+                  rows={5}
+                  value={exp.bullets}
+                  onChange={(e) => setExp({ ...exp, bullets: e.target.value })}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Button type="submit" loading={isPending} disabled={!profileId}>
+                  Add experience
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Extracted education</CardTitle>
+              <Badge variant="neutral">{suggestedEdu.length}</Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {suggestedEdu.length === 0 ? (
+              <p className="text-sm text-muted-foreground">None detected.</p>
+            ) : (
+              <ul className="space-y-1 text-sm">
+                {suggestedEdu.map((e, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center justify-between gap-2 rounded-md border border-border bg-surface-elevated px-2 py-1.5"
+                  >
+                    <span className="truncate text-foreground/85">{e.institution}</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        setEdu({
+                          institution: e.institution,
+                          degree: '',
+                          field: '',
+                          end_date: '',
+                        })
+                      }
+                    >
+                      Use
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Add education</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form
+              onSubmit={(evt) => {
+                evt.preventDefault();
+                const payload = {
+                  institution: edu.institution.trim(),
+                  degree: edu.degree.trim() || null,
+                  field: edu.field.trim() || null,
+                  end_date: edu.end_date || null,
+                  ord: 0,
+                };
+                startTransition(() => {
+                  void onAddEducation(payload).then(() => {
+                    setEdu({ institution: '', degree: '', field: '', end_date: '' });
+                  });
+                });
+              }}
+              className="grid gap-3 sm:grid-cols-2"
+            >
+              <div className="sm:col-span-2">
+                <Label required>Institution</Label>
+                <Input
+                  required
+                  value={edu.institution}
+                  onChange={(e) => setEdu({ ...edu, institution: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Degree</Label>
+                <Input
+                  value={edu.degree}
+                  onChange={(e) => setEdu({ ...edu, degree: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Field</Label>
+                <Input
+                  value={edu.field}
+                  onChange={(e) => setEdu({ ...edu, field: e.target.value })}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label>End date</Label>
+                <Input
+                  type="date"
+                  value={edu.end_date}
+                  onChange={(e) => setEdu({ ...edu, end_date: e.target.value })}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Button type="submit" loading={isPending} disabled={!profileId}>
+                  Add education
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       </div>
 
-      <form
-        onSubmit={(evt) => {
-          evt.preventDefault();
-          const bulletsParsed = exp.bullets
-            .split('\n')
-            .map((l) => l.replace(/^[-*•]\s*/, '').trim())
-            .filter(Boolean)
-            .map((text, ord) => ({ text, ord }));
-          const payload = {
-            company: exp.company.trim(),
-            title: exp.title.trim(),
-            start_date: exp.start_date,
-            end_date: exp.end_date || null,
-            description: exp.description.trim() || null,
-          };
-          startTransition(() => {
-            void onAdd(payload, bulletsParsed).then(() => {
-              setExp({ company: '', title: '', start_date: '', end_date: '', description: '', bullets: '' });
-            });
-          });
-        }}
-        className="grid grid-cols-1 gap-3 rounded-md border border-border p-4 sm:grid-cols-2"
-      >
-        <h2 className="sm:col-span-2 text-sm font-medium">Add experience</h2>
-        <Field label="Company" required>
-          <input
-            required
-            value={exp.company}
-            onChange={(e) => setExp({ ...exp, company: e.target.value })}
-            className="input"
-          />
-        </Field>
-        <Field label="Title" required>
-          <input
-            required
-            value={exp.title}
-            onChange={(e) => setExp({ ...exp, title: e.target.value })}
-            className="input"
-          />
-        </Field>
-        <Field label="Start date" required>
-          <input
-            required
-            type="date"
-            value={exp.start_date}
-            onChange={(e) => setExp({ ...exp, start_date: e.target.value })}
-            className="input"
-          />
-        </Field>
-        <Field label="End date (blank = current)">
-          <input
-            type="date"
-            value={exp.end_date}
-            onChange={(e) => setExp({ ...exp, end_date: e.target.value })}
-            className="input"
-          />
-        </Field>
-        <Field label="Description" className="sm:col-span-2">
-          <textarea
-            rows={2}
-            value={exp.description}
-            onChange={(e) => setExp({ ...exp, description: e.target.value })}
-            className="input"
-          />
-        </Field>
-        <Field label="Bullets (one per line)" className="sm:col-span-2">
-          <textarea
-            rows={5}
-            value={exp.bullets}
-            onChange={(e) => setExp({ ...exp, bullets: e.target.value })}
-            className="input"
-          />
-        </Field>
-        <div className="sm:col-span-2">
-          <button type="submit" disabled={isPending || !profileId} className="btn-primary">
-            {isPending ? 'Saving…' : 'Add experience'}
-          </button>
-        </div>
-      </form>
-
-      <div className="rounded-md border border-border p-4">
-        <h2 className="text-sm font-medium">Extracted education ({suggestedEdu.length})</h2>
-        <ul className="mt-2 space-y-1 text-xs">
-          {suggestedEdu.map((e, i) => (
-            <li key={i} className="flex items-center justify-between">
-              <span>{e.institution}</span>
-              <button
-                type="button"
-                className="text-blue-600 underline"
-                onClick={() => setEdu({ institution: e.institution, degree: '', field: '', end_date: '' })}
-              >
-                Use
-              </button>
-            </li>
-          ))}
-          {suggestedEdu.length === 0 && (
-            <li className="text-muted-foreground">None detected. Add manually below.</li>
-          )}
-        </ul>
-      </div>
-
-      <form
-        onSubmit={(evt) => {
-          evt.preventDefault();
-          const payload = {
-            institution: edu.institution.trim(),
-            degree: edu.degree.trim() || null,
-            field: edu.field.trim() || null,
-            end_date: edu.end_date || null,
-            ord: 0,
-          };
-          startTransition(() => {
-            void onAddEducation(payload).then(() => {
-              setEdu({ institution: '', degree: '', field: '', end_date: '' });
-            });
-          });
-        }}
-        className="grid grid-cols-1 gap-3 rounded-md border border-border p-4 sm:grid-cols-2"
-      >
-        <h2 className="sm:col-span-2 text-sm font-medium">Add education</h2>
-        <Field label="Institution" required>
-          <input
-            required
-            value={edu.institution}
-            onChange={(e) => setEdu({ ...edu, institution: e.target.value })}
-            className="input"
-          />
-        </Field>
-        <Field label="Degree">
-          <input
-            value={edu.degree}
-            onChange={(e) => setEdu({ ...edu, degree: e.target.value })}
-            className="input"
-          />
-        </Field>
-        <Field label="Field">
-          <input
-            value={edu.field}
-            onChange={(e) => setEdu({ ...edu, field: e.target.value })}
-            className="input"
-          />
-        </Field>
-        <Field label="End date">
-          <input
-            type="date"
-            value={edu.end_date}
-            onChange={(e) => setEdu({ ...edu, end_date: e.target.value })}
-            className="input"
-          />
-        </Field>
-        <div className="sm:col-span-2">
-          <button type="submit" disabled={isPending || !profileId} className="btn-primary">
-            {isPending ? 'Saving…' : 'Add education'}
-          </button>
-        </div>
-      </form>
-
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between rounded-lg border border-border bg-surface-elevated/70 px-4 py-3">
         <p className="text-xs text-muted-foreground">
-          Existing in your profile: {existing.length} experiences.
+          Existing:{' '}
+          <span className="font-mono tabular-nums text-foreground">{existing.length}</span>{' '}
+          experience{existing.length === 1 ? '' : 's'} in your profile.
         </p>
-        <button type="button" className="btn-secondary" onClick={onNext}>
-          Continue
-        </button>
+        <Button variant="secondary" onClick={onNext}>
+          Continue <IconArrowRight />
+        </Button>
       </div>
-    </section>
+    </div>
   );
 }
 
-// ------------------- Step 3: Skills -------------------
+/* ---------------------- Step 3: Skills ---------------------- */
+
 const SKILL_CATEGORY_OPTIONS: SkillCategory[] = [
   'language',
   'framework',
@@ -683,129 +784,140 @@ function SkillsStep({
   );
 
   return (
-    <section className="flex flex-col gap-6">
-      <div className="rounded-md border border-border p-4">
-        <h2 className="text-sm font-medium">Current skills ({initial.length})</h2>
-        <ul className="mt-2 flex flex-wrap gap-2 text-xs">
-          {initial.map((s) => (
-            <li
-              key={s.id}
-              className="flex items-center gap-1 rounded-full border border-border px-2 py-1"
-            >
-              <span>
-                {s.name}{' '}
-                <span className="text-muted-foreground">({s.category})</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => void onRemove(s.id)}
-                className="text-red-600"
-                aria-label={`Remove ${s.name}`}
-              >
-                ×
-              </button>
-            </li>
-          ))}
-          {initial.length === 0 && (
-            <li className="text-muted-foreground">Add skills below.</li>
-          )}
-        </ul>
-      </div>
-
-      {suggestions.length > 0 && (
-        <div className="rounded-md border border-dashed border-border p-4">
-          <h3 className="text-sm font-medium">Parsed suggestions</h3>
-          <div className="mt-2 flex flex-wrap gap-2 text-xs">
-            {suggestions.map((s) => (
-              <button
-                type="button"
-                key={s.name}
-                onClick={() => {
-                  setName(s.name);
-                  if (s.category_guess) setCategory(s.category_guess);
-                }}
-                className="rounded-full border border-border px-2 py-1 hover:bg-slate-100"
-              >
-                {s.name}
-              </button>
-            ))}
+    <div className="flex flex-col gap-4">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Current skills</CardTitle>
+            <Badge variant="neutral">{initial.length}</Badge>
           </div>
-        </div>
-      )}
+        </CardHeader>
+        <CardContent>
+          {initial.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Add skills below.</p>
+          ) : (
+            <ul className="flex flex-wrap gap-1.5">
+              {initial.map((s) => (
+                <li key={s.id}>
+                  <span className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-elevated px-2 py-1 text-xs">
+                    <span className="text-foreground">{s.name}</span>
+                    <span className="font-mono text-2xs text-muted-foreground">
+                      ({s.category})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => void onRemove(s.id)}
+                      className="ml-0.5 rounded-sm p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      aria-label={`Remove ${s.name}`}
+                    >
+                      <IconX className="size-2.5" />
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const payload = {
-            name: name.trim(),
-            category,
-            proficiency: proficiency === '' ? null : Number(proficiency),
-          };
-          startTransition(() => {
-            void onAdd(payload).then(() => {
-              setName('');
-              setProficiency('');
-            });
-          });
-        }}
-        className="flex flex-wrap items-end gap-3"
-      >
-        <Field label="Skill" required>
-          <input
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="input"
-          />
-        </Field>
-        <Field label="Category">
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value as SkillCategory)}
-            className="input"
+      {suggestions.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Parsed suggestions</CardTitle>
+            <CardDescription>Click one to prefill the form below.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-1.5">
+              {suggestions.map((s) => (
+                <button
+                  type="button"
+                  key={s.name}
+                  onClick={() => {
+                    setName(s.name);
+                    if (s.category_guess) setCategory(s.category_guess);
+                  }}
+                  className="rounded-md border border-dashed border-border bg-surface px-2 py-1 text-xs text-foreground/80 transition-colors hover:border-primary/50 hover:text-primary"
+                >
+                  {s.name}
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Add skill</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const payload = {
+                name: name.trim(),
+                category,
+                proficiency: proficiency === '' ? null : Number(proficiency),
+              };
+              startTransition(() => {
+                void onAdd(payload).then(() => {
+                  setName('');
+                  setProficiency('');
+                });
+              });
+            }}
+            className="grid gap-3 sm:grid-cols-[1fr_180px_140px_auto] sm:items-end"
           >
-            {SKILL_CATEGORY_OPTIONS.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Proficiency (1–5)">
-          <input
-            type="number"
-            min={1}
-            max={5}
-            value={proficiency}
-            onChange={(e) =>
-              setProficiency(e.target.value === '' ? '' : Number(e.target.value))
-            }
-            className="input w-24"
-          />
-        </Field>
-        <button type="submit" disabled={isPending} className="btn-primary">
-          Add skill
-        </button>
-      </form>
+            <div>
+              <Label required>Skill</Label>
+              <Input required value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <div>
+              <Label>Category</Label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as SkillCategory)}
+                className={SELECT_CLASSES}
+              >
+                {SKILL_CATEGORY_OPTIONS.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label>Proficiency (1–5)</Label>
+              <Input
+                type="number"
+                min={1}
+                max={5}
+                value={proficiency}
+                onChange={(e) =>
+                  setProficiency(e.target.value === '' ? '' : Number(e.target.value))
+                }
+                className="font-mono"
+              />
+            </div>
+            <Button type="submit" loading={isPending}>
+              Add
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       <div className="flex justify-end">
-        <button type="button" className="btn-secondary" onClick={onNext}>
-          Continue
-        </button>
+        <Button variant="secondary" onClick={onNext}>
+          Continue <IconArrowRight />
+        </Button>
       </div>
-    </section>
+    </div>
   );
 }
 
-// ------------------- Step 4: Preferences -------------------
-const EXPERIENCE_LEVELS: ExperienceLevel[] = [
-  'intern',
-  'entry',
-  'mid',
-  'senior',
-  'lead',
-  'principal',
-];
+/* ---------------------- Step 4: Preferences ---------------------- */
+
+const EXPERIENCE_LEVELS: ExperienceLevel[] = ['intern', 'entry', 'mid', 'senior', 'lead', 'principal'];
 const WORK_MODES: WorkMode[] = ['remote', 'hybrid', 'onsite'];
 const JOB_TYPES: JobType[] = ['full_time', 'part_time', 'contract', 'internship', 'freelance'];
 
@@ -816,12 +928,8 @@ function PreferencesStep({
   initial: OnboardingInitialData['preferences'];
   onSave: (input: unknown) => Promise<void>;
 }) {
-  const [levels, setLevels] = useState<ExperienceLevel[]>(
-    initial?.experience_levels ?? ['mid'],
-  );
-  const [modes, setModes] = useState<WorkMode[]>(
-    initial?.work_modes ?? ['remote', 'hybrid'],
-  );
+  const [levels, setLevels] = useState<ExperienceLevel[]>(initial?.experience_levels ?? ['mid']);
+  const [modes, setModes] = useState<WorkMode[]>(initial?.work_modes ?? ['remote', 'hybrid']);
   const [types, setTypes] = useState<JobType[]>(initial?.job_types ?? ['full_time']);
   const [salaryMin, setSalaryMin] = useState<string>(
     initial?.salary_min != null ? String(initial.salary_min) : '',
@@ -843,126 +951,158 @@ function PreferencesStep({
     arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        const payload = {
-          experience_levels: levels,
-          work_modes: modes,
-          job_types: types,
-          salary_min: salaryMin === '' ? null : Number(salaryMin),
-          salary_max: salaryMax === '' ? null : Number(salaryMax),
-          salary_currency: currency.toUpperCase(),
-          locations: locations
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean),
-          remote_anywhere: remoteAnywhere,
-          notice_period_days: noticeDays === '' ? null : Number(noticeDays),
-          willing_to_relocate: relocate,
-          daily_app_cap: Number(cap) || 30,
-        };
-        startTransition(() => {
-          void onSave(payload);
-        });
-      }}
-      className="flex flex-col gap-4"
-    >
-      <CheckboxGroup
-        label="Experience levels"
-        options={EXPERIENCE_LEVELS}
-        value={levels}
-        onChange={(v) => setLevels(toggle(levels, v))}
-      />
-      <CheckboxGroup
-        label="Work modes"
-        options={WORK_MODES}
-        value={modes}
-        onChange={(v) => setModes(toggle(modes, v))}
-      />
-      <CheckboxGroup
-        label="Job types"
-        options={JOB_TYPES}
-        value={types}
-        onChange={(v) => setTypes(toggle(types, v))}
-      />
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Field label="Salary min">
-          <input
-            type="number"
-            value={salaryMin}
-            onChange={(e) => setSalaryMin(e.target.value)}
-            className="input"
+    <Card>
+      <CardHeader>
+        <CardTitle>Targeting rules</CardTitle>
+        <CardDescription>Sets what the fit scorer counts as in-bounds.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const payload = {
+              experience_levels: levels,
+              work_modes: modes,
+              job_types: types,
+              salary_min: salaryMin === '' ? null : Number(salaryMin),
+              salary_max: salaryMax === '' ? null : Number(salaryMax),
+              salary_currency: currency.toUpperCase(),
+              locations: locations
+                .split(',')
+                .map((s) => s.trim())
+                .filter(Boolean),
+              remote_anywhere: remoteAnywhere,
+              notice_period_days: noticeDays === '' ? null : Number(noticeDays),
+              willing_to_relocate: relocate,
+              daily_app_cap: Number(cap) || 30,
+            };
+            startTransition(() => {
+              void onSave(payload);
+            });
+          }}
+          className="flex flex-col gap-5"
+        >
+          <ChipGroup
+            label="Experience levels"
+            options={EXPERIENCE_LEVELS}
+            value={levels}
+            onChange={(v) => setLevels(toggle(levels, v))}
           />
-        </Field>
-        <Field label="Salary max">
-          <input
-            type="number"
-            value={salaryMax}
-            onChange={(e) => setSalaryMax(e.target.value)}
-            className="input"
+          <ChipGroup
+            label="Work modes"
+            options={WORK_MODES}
+            value={modes}
+            onChange={(v) => setModes(toggle(modes, v))}
           />
-        </Field>
-        <Field label="Currency">
-          <input
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            maxLength={3}
-            className="input"
+          <ChipGroup
+            label="Job types"
+            options={JOB_TYPES}
+            value={types}
+            onChange={(v) => setTypes(toggle(types, v))}
           />
-        </Field>
-      </div>
-      <Field label="Locations (comma-separated)">
-        <input
-          value={locations}
-          onChange={(e) => setLocations(e.target.value)}
-          className="input"
-        />
-      </Field>
-      <label className="inline-flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={remoteAnywhere}
-          onChange={(e) => setRemoteAnywhere(e.target.checked)}
-        />
-        Anywhere remote
-      </label>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Field label="Notice period (days)">
-          <input
-            type="number"
-            value={noticeDays}
-            onChange={(e) => setNoticeDays(e.target.value)}
-            className="input"
-          />
-        </Field>
-        <Field label="Daily application cap">
-          <input
-            type="number"
-            min={1}
-            value={cap}
-            onChange={(e) => setCap(e.target.value)}
-            className="input"
-          />
-        </Field>
-      </div>
-      <label className="inline-flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={relocate}
-          onChange={(e) => setRelocate(e.target.checked)}
-        />
-        Willing to relocate
-      </label>
 
-      <button type="submit" disabled={isPending} className="btn-primary self-start">
-        {isPending ? 'Saving…' : 'Save preferences'}
-      </button>
-    </form>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <Label>Salary min</Label>
+              <Input
+                type="number"
+                value={salaryMin}
+                onChange={(e) => setSalaryMin(e.target.value)}
+                className="font-mono"
+              />
+            </div>
+            <div>
+              <Label>Salary max</Label>
+              <Input
+                type="number"
+                value={salaryMax}
+                onChange={(e) => setSalaryMax(e.target.value)}
+                className="font-mono"
+              />
+            </div>
+            <div>
+              <Label>Currency</Label>
+              <Input
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                maxLength={3}
+                className="font-mono uppercase"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label>Locations (comma-separated)</Label>
+            <Input value={locations} onChange={(e) => setLocations(e.target.value)} />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <Label>Notice period (days)</Label>
+              <Input
+                type="number"
+                value={noticeDays}
+                onChange={(e) => setNoticeDays(e.target.value)}
+                className="font-mono"
+              />
+            </div>
+            <div>
+              <Label>Daily application cap</Label>
+              <Input
+                type="number"
+                min={1}
+                value={cap}
+                onChange={(e) => setCap(e.target.value)}
+                className="font-mono"
+              />
+              <HelperText>Hard cap. Nothing submits above this.</HelperText>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Toggle
+              checked={remoteAnywhere}
+              onChange={setRemoteAnywhere}
+              label="Anywhere remote"
+            />
+            <Toggle checked={relocate} onChange={setRelocate} label="Willing to relocate" />
+          </div>
+
+          <div>
+            <Button type="submit" loading={isPending}>
+              Save preferences <IconArrowRight />
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
 
-// ------------------- Step 5: Stories (STAR) -------------------
+function Toggle({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}) {
+  return (
+    <label className="inline-flex flex-1 cursor-pointer items-center gap-2 rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="size-4 accent-primary"
+      />
+      <span className="text-foreground">{label}</span>
+    </label>
+  );
+}
+
+/* ---------------------- Step 5: Stories ---------------------- */
+
 const STORY_PROMPTS: { key: StoryDimension; label: string }[] = [
   { key: 'leadership', label: 'Leadership' },
   { key: 'conflict', label: 'Conflict' },
@@ -998,125 +1138,105 @@ function StoriesStep({
     setDims(dims.includes(d) ? dims.filter((x) => x !== d) : [...dims, d]);
 
   return (
-    <section className="flex flex-col gap-4">
-      <p className="text-xs text-muted-foreground">
-        Aim for 6–8 stories across dimensions. You have {existing} so far.
-      </p>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const payload = {
-            dimensions: dims,
-            title: title.trim(),
-            situation: situation.trim(),
-            task: task.trim(),
-            action: action.trim(),
-            result: result.trim(),
-            reflection: reflection.trim() || null,
-          };
-          startTransition(() => {
-            void onAdd(payload).then(() => {
-              setTitle('');
-              setSituation('');
-              setTask('');
-              setAction('');
-              setResult('');
-              setReflection('');
-            });
-          });
-        }}
-        className="flex flex-col gap-3"
-      >
-        <div>
-          <span className="text-xs font-medium">Dimensions</span>
-          <div className="mt-1 flex flex-wrap gap-2 text-xs">
-            {STORY_PROMPTS.map((p) => (
-              <button
-                key={p.key}
-                type="button"
-                onClick={() => toggleDim(p.key)}
-                className={[
-                  'rounded-full border px-2 py-1',
-                  dims.includes(p.key)
-                    ? 'border-foreground bg-foreground text-background'
-                    : 'border-border',
-                ].join(' ')}
-              >
-                {p.label}
-              </button>
-            ))}
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>STAR stories</CardTitle>
+            <CardDescription>
+              Aim for 6–8 across dimensions. You have {existing} so far.
+            </CardDescription>
           </div>
+          <Badge variant={existing >= 6 ? 'success' : 'neutral'}>{existing} / 6+</Badge>
         </div>
-        <Field label="Title" required>
-          <input
-            required
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="input"
-          />
-        </Field>
-        <Field label="Situation" required>
-          <textarea
-            required
-            rows={2}
-            value={situation}
-            onChange={(e) => setSituation(e.target.value)}
-            className="input"
-          />
-        </Field>
-        <Field label="Task" required>
-          <textarea
-            required
-            rows={2}
-            value={task}
-            onChange={(e) => setTask(e.target.value)}
-            className="input"
-          />
-        </Field>
-        <Field label="Action" required>
-          <textarea
-            required
-            rows={3}
-            value={action}
-            onChange={(e) => setAction(e.target.value)}
-            className="input"
-          />
-        </Field>
-        <Field label="Result" required>
-          <textarea
-            required
-            rows={2}
-            value={result}
-            onChange={(e) => setResult(e.target.value)}
-            className="input"
-          />
-        </Field>
-        <Field label="Reflection (optional)">
-          <textarea
-            rows={2}
-            value={reflection}
-            onChange={(e) => setReflection(e.target.value)}
-            className="input"
-          />
-        </Field>
-        <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={isPending || !profileId || dims.length === 0}
-            className="btn-primary"
-          >
-            {isPending ? 'Saving…' : 'Add story'}
-          </button>
-          <button type="button" className="btn-secondary" onClick={onNext}>
-            Continue
-          </button>
-        </div>
-      </form>
-    </section>
+      </CardHeader>
+      <CardContent>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const payload = {
+              dimensions: dims,
+              title: title.trim(),
+              situation: situation.trim(),
+              task: task.trim(),
+              action: action.trim(),
+              result: result.trim(),
+              reflection: reflection.trim() || null,
+            };
+            startTransition(() => {
+              void onAdd(payload).then(() => {
+                setTitle('');
+                setSituation('');
+                setTask('');
+                setAction('');
+                setResult('');
+                setReflection('');
+              });
+            });
+          }}
+          className="flex flex-col gap-4"
+        >
+          <div>
+            <Label>Dimensions</Label>
+            <div className="flex flex-wrap gap-1.5">
+              {STORY_PROMPTS.map((p) => {
+                const active = dims.includes(p.key);
+                return (
+                  <button
+                    key={p.key}
+                    type="button"
+                    onClick={() => toggleDim(p.key)}
+                    className={cn(
+                      'rounded-md border px-2 py-1 text-xs font-medium transition-colors',
+                      active
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground',
+                    )}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div>
+            <Label required>Title</Label>
+            <Input required value={title} onChange={(e) => setTitle(e.target.value)} />
+          </div>
+          {(
+            [
+              ['Situation', situation, setSituation, 2, true],
+              ['Task', task, setTask, 2, true],
+              ['Action', action, setAction, 3, true],
+              ['Result', result, setResult, 2, true],
+              ['Reflection (optional)', reflection, setReflection, 2, false],
+            ] as const
+          ).map(([label, val, set, rows, req]) => (
+            <div key={label}>
+              <Label required={req}>{label}</Label>
+              <Textarea rows={rows} value={val} onChange={(e) => set(e.target.value)} />
+            </div>
+          ))}
+          <div className="flex items-center justify-between">
+            <Button
+              type="submit"
+              loading={isPending}
+              disabled={!profileId || dims.length === 0}
+            >
+              Add story
+            </Button>
+            <Button type="button" variant="secondary" onClick={onNext}>
+              Continue <IconArrowRight />
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
 
-// ------------------- Step 6: Q&A -------------------
+/* ---------------------- Step 6: Q&A ---------------------- */
+
 const SEED_QUESTIONS: { key: string; text: string; word_limit: number | null }[] = [
   { key: 'tell_me_about_yourself_150', text: 'Tell us about yourself (≤150 words).', word_limit: 150 },
   { key: 'tell_me_about_yourself_300', text: 'Tell us about yourself (≤300 words).', word_limit: 300 },
@@ -1160,65 +1280,54 @@ function QuestionsStep({
   };
 
   return (
-    <section className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       {SEED_QUESTIONS.map((q) => (
-        <div key={q.key} className="rounded-md border border-border p-3">
-          <label className="text-sm font-medium">{q.text}</label>
-          <textarea
-            rows={3}
-            value={drafts[q.key] ?? ''}
-            onChange={(e) => setDrafts({ ...drafts, [q.key]: e.target.value })}
-            className="input mt-2"
-          />
-          <div className="mt-2 flex justify-end">
-            <button type="button" className="btn-secondary" onClick={() => saveOne(q)}>
-              Save
-            </button>
-          </div>
-        </div>
+        <Card key={q.key}>
+          <CardHeader className="pb-2">
+            <div className="flex items-start justify-between">
+              <CardTitle className="text-sm">{q.text}</CardTitle>
+              {q.word_limit ? (
+                <Badge variant="outline" className="font-mono">
+                  ≤{q.word_limit} words
+                </Badge>
+              ) : null}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              rows={3}
+              value={drafts[q.key] ?? ''}
+              onChange={(e) => setDrafts({ ...drafts, [q.key]: e.target.value })}
+            />
+            <div className="mt-2 flex justify-end">
+              <Button type="button" size="sm" variant="secondary" onClick={() => saveOne(q)}>
+                Save
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       ))}
 
-      <div className="flex justify-end">
-        <button
+      <div className="flex justify-end pt-2">
+        <Button
           type="button"
-          disabled={isPending}
-          className="btn-primary"
+          loading={isPending}
           onClick={() => {
             startTransition(() => {
               void onComplete();
             });
           }}
         >
-          Mark onboarding complete
-        </button>
+          <IconCheck /> Mark onboarding complete
+        </Button>
       </div>
-    </section>
+    </div>
   );
 }
 
-// ------------------- small helpers -------------------
-function Field({
-  label,
-  required,
-  className,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className={['flex flex-col gap-1 text-xs', className ?? ''].join(' ')}>
-      <span className="font-medium text-slate-700">
-        {label} {required ? <span className="text-red-600">*</span> : null}
-      </span>
-      {children}
-    </label>
-  );
-}
+/* ---------------------- helpers ---------------------- */
 
-function CheckboxGroup<T extends string>({
+function ChipGroup<T extends string>({
   label,
   options,
   value,
@@ -1231,27 +1340,26 @@ function CheckboxGroup<T extends string>({
 }) {
   return (
     <div>
-      <span className="text-xs font-medium">{label}</span>
-      <div className="mt-1 flex flex-wrap gap-2 text-xs">
-        {options.map((opt) => (
-          <label
-            key={opt}
-            className={[
-              'cursor-pointer rounded-full border px-2 py-1',
-              value.includes(opt)
-                ? 'border-foreground bg-foreground text-background'
-                : 'border-border',
-            ].join(' ')}
-          >
-            <input
-              type="checkbox"
-              className="sr-only"
-              checked={value.includes(opt)}
-              onChange={() => onChange(opt)}
-            />
-            {opt}
-          </label>
-        ))}
+      <Label>{label}</Label>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((opt) => {
+          const active = value.includes(opt);
+          return (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => onChange(opt)}
+              className={cn(
+                'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                active
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground',
+              )}
+            >
+              {opt.replace(/_/g, ' ')}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

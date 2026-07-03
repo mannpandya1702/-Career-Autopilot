@@ -13,7 +13,7 @@ describe('mountScoreWidget', () => {
     });
     const root = document.getElementById('career-autopilot-widget');
     expect(root).not.toBeNull();
-    expect(root?.textContent).toContain('Career Autopilot');
+    expect(root?.textContent).toContain('career.autopilot');
     expect(root?.textContent).toContain('87');
     expect(root?.textContent).toContain('Kubernetes');
     expect(root?.textContent).toContain('Strong fit');

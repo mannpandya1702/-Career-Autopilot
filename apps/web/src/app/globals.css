@@ -4,32 +4,159 @@
 
 @layer base {
   :root {
+    --background: 168 76% 97%;
+    --foreground: 175 59% 19%;
+    --surface: 0 0% 100%;
+    --surface-elevated: 168 65% 99%;
+
+    --muted: 172 34% 94%;
+    --muted-foreground: 175 25% 38%;
+
+    --border: 173 60% 78%;
+    --input: 173 55% 85%;
+    --ring: 173 80% 32%;
+
+    --primary: 173 80% 32%;
+    --primary-foreground: 168 76% 97%;
+
+    --secondary: 172 34% 94%;
+    --secondary-foreground: 175 59% 19%;
+
+    --accent: 21 90% 48%;
+    --accent-foreground: 168 76% 97%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 160 84% 30%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 175 59% 19%;
+
+    --info: 199 89% 43%;
+    --info-foreground: 0 0% 100%;
+
+    --shadow-color: 175 30% 20%;
+    --radius: 0.625rem;
     color-scheme: light;
   }
+
+  .dark {
+    --background: 178 66% 9%;
+    --foreground: 168 76% 90%;
+    --surface: 178 45% 12%;
+    --surface-elevated: 178 40% 15%;
+
+    --muted: 178 35% 16%;
+    --muted-foreground: 172 25% 68%;
+
+    --border: 178 30% 20%;
+    --input: 178 30% 22%;
+    --ring: 173 78% 45%;
+
+    --primary: 173 78% 45%;
+    --primary-foreground: 178 66% 9%;
+
+    --secondary: 178 35% 16%;
+    --secondary-foreground: 168 76% 90%;
+
+    --accent: 21 90% 55%;
+    --accent-foreground: 178 66% 9%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 160 74% 42%;
+    --success-foreground: 178 66% 9%;
+
+    --warning: 38 92% 58%;
+    --warning-foreground: 178 66% 9%;
+
+    --info: 199 89% 55%;
+    --info-foreground: 178 66% 9%;
+
+    --shadow-color: 0 0% 0%;
+    color-scheme: dark;
+  }
+
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
   html, body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground;
+  }
+  body {
+    font-family: var(--font-sans);
+  }
+  code, kbd, pre, samp, .font-mono {
+    font-family: var(--font-mono);
+    font-feature-settings: 'zero', 'ss01';
+  }
+  ::selection {
+    background-color: hsl(var(--primary) / 0.25);
+    color: hsl(var(--foreground));
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+    background-clip: content-box;
+    border: 2px solid transparent;
   }
 }
 
-@layer components {
-  .input {
-    @apply w-full rounded-md border border-border bg-white px-3 py-2 text-sm
-           outline-none transition focus:border-foreground focus:ring-1 focus:ring-foreground
-           disabled:cursor-not-allowed disabled:opacity-60;
+@layer utilities {
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
-  .btn-primary {
-    @apply inline-flex items-center justify-center rounded-md bg-primary px-4 py-2
-           text-sm font-medium text-primary-foreground transition
-           hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60;
+  .text-balance {
+    text-wrap: balance;
   }
-  .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-md border border-border
-           bg-white px-4 py-2 text-sm font-medium text-foreground transition
-           hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60;
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.4) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.4) 1px, transparent 1px);
+    background-size: 32px 32px;
   }
-  .btn-danger {
-    @apply inline-flex items-center justify-center rounded-md border border-red-300
-           bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition
-           hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60;
+  .bg-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--surface-elevated)) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
