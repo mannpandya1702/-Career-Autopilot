@@ -1,0 +1,67 @@
+name: backup-supabase
+
+# P11.4 — nightly Supabase pg_dump → Oracle VM via SSH. Keeps 14 days.
+# Runs at 03:11 UTC to avoid the daily cost-rollup pg_cron at 01:00 and
+# the keepalive at 04:17.
+
+on:
+  schedule:
+    - cron: '11 3 * * *'
+  workflow_dispatch: {}
+
+concurrency:
+  group: backup-supabase
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: pg_dump → VM
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install postgres-client (matches Supabase major)
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y postgresql-client-16
+
+      - name: Run pg_dump locally
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_DIR: /tmp/backup
+          RETENTION_DAYS: 14
+        run: bash scripts/backup-supabase.sh
+
+      - name: Upload to Oracle VM via SSH
+        env:
+          SSH_HOST: ${{ secrets.ORACLE_VM_HOST }}
+          SSH_USER: ${{ secrets.ORACLE_VM_USER }}
+          SSH_KEY: ${{ secrets.ORACLE_VM_SSH_KEY }}
+        run: |
+          if [[ -z "$SSH_HOST" ]]; then
+            echo "ORACLE_VM_HOST not set — skipping upload (CI smoke run)"
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" \
+            "mkdir -p /var/backups/career-autopilot"
+          scp -i ~/.ssh/id_ed25519 \
+            /tmp/backup/*.sql.gz \
+            "$SSH_USER@$SSH_HOST:/var/backups/career-autopilot/"
+          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" \
+            "find /var/backups/career-autopilot -name 'career-autopilot-*.sql.gz' -mtime +14 -delete"
+
+      - name: Verify retention on VM
+        env:
+          SSH_HOST: ${{ secrets.ORACLE_VM_HOST }}
+          SSH_USER: ${{ secrets.ORACLE_VM_USER }}
+        if: env.SSH_HOST != ''
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" \
+            "ls -la /var/backups/career-autopilot/"

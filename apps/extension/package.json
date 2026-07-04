@@ -1,0 +1,45 @@
+{
+  "name": "@career-autopilot/extension",
+  "displayName": "Career Autopilot",
+  "version": "0.1.0",
+  "description": "Personal job-application overlay for LinkedIn + Indeed.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "package": "plasmo package",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@career-autopilot/llm": "workspace:*",
+    "@career-autopilot/resume": "workspace:*",
+    "@career-autopilot/shared": "workspace:*",
+    "plasmo": "0.89.4",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "0.0.287",
+    "@types/node": "20.19.39",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.16.0",
+    "jsdom": "25.0.1",
+    "typescript": "5.6.3",
+    "vitest": "2.1.8"
+  },
+  "manifest": {
+    "name": "Career Autopilot",
+    "permissions": ["storage", "activeTab"],
+    "host_permissions": [
+      "https://www.linkedin.com/*",
+      "https://linkedin.com/*",
+      "https://www.indeed.com/*",
+      "https://indeed.com/*"
+    ]
+  }
+}

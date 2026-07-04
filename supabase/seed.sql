@@ -1,0 +1,3 @@
+-- Seed data for local Supabase dev only.
+-- This file is NEVER applied to the hosted project.
+-- Populated in later phases; Phase 1 leaves it empty.
