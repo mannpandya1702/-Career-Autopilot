@@ -36,6 +36,35 @@ const PRIMARY_NAV: NavItem[] = [
 
 const SECONDARY_NAV: NavItem[] = [{ href: '/profile', label: 'Profile', Icon: IconUser }];
 
+const CRUMB_LABELS: Record<string, string> = {
+  app: 'Dashboard',
+  jobs: 'Jobs',
+  queue: 'Review Queue',
+  tracker: 'Tracker',
+  analytics: 'Analytics',
+  profile: 'Profile',
+  onboarding: 'Onboarding',
+  review: 'Review',
+};
+
+function buildCrumbs(pathname: string | null): { label: string; href?: Route }[] {
+  if (!pathname || pathname === '/app') return [];
+  const parts = pathname.split('/').filter(Boolean);
+  const crumbs: { label: string; href?: Route }[] = [];
+  let acc = '';
+  for (let i = 0; i < parts.length; i++) {
+    const raw = parts[i] ?? '';
+    acc += `/${raw}`;
+    // Skip dynamic segments (uuids / ids) in the label — collapse into parent
+    const isDynamic = /^[0-9a-f-]{8,}$/i.test(raw);
+    if (isDynamic) continue;
+    const label = CRUMB_LABELS[raw] ?? raw.replace(/-/g, ' ');
+    const isLast = i === parts.length - 1;
+    crumbs.push(isLast ? { label } : { label, href: acc as Route });
+  }
+  return crumbs;
+}
+
 export function AppShell({
   children,
   userEmail,
@@ -62,13 +91,49 @@ export function AppShell({
           userEmail={userEmail}
           actions={headerActions}
         />
+        <Breadcrumbs pathname={pathname} />
         <main className="flex-1 overflow-x-hidden">
-          <div className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
+          <div className="mx-auto w-full max-w-[1400px] px-4 pb-8 pt-2 sm:px-6 lg:px-8">
             {children}
           </div>
         </main>
       </div>
     </div>
+  );
+}
+
+function Breadcrumbs({ pathname }: { pathname: string | null }) {
+  const crumbs = buildCrumbs(pathname);
+  if (crumbs.length === 0) return null;
+  return (
+    <nav
+      aria-label="Breadcrumb"
+      className="border-b border-border/60 bg-background/60 backdrop-blur"
+    >
+      <ol className="mx-auto flex w-full max-w-[1400px] items-center gap-1.5 overflow-x-auto whitespace-nowrap px-4 py-2 text-2xs text-muted-foreground sm:px-6 lg:px-8">
+        <li>
+          <Link href="/app" className="hover:text-foreground transition-colors">
+            Dashboard
+          </Link>
+        </li>
+        {crumbs.map((crumb, i) => (
+          <React.Fragment key={i}>
+            <li aria-hidden="true" className="text-muted-foreground/60">
+              /
+            </li>
+            <li className={crumb.href ? '' : 'font-medium text-foreground'}>
+              {crumb.href ? (
+                <Link href={crumb.href} className="hover:text-foreground transition-colors">
+                  {crumb.label}
+                </Link>
+              ) : (
+                <span>{crumb.label}</span>
+              )}
+            </li>
+          </React.Fragment>
+        ))}
+      </ol>
+    </nav>
   );
 }
 

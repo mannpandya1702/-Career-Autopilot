@@ -132,6 +132,21 @@
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+
+  .fan-card {
+    transform: translate(-50%, 0) rotate(var(--fan-rest-rotate, 0deg));
+    transform-origin: 50% 50%;
+    transition: transform 520ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 520ms cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+  }
+  .ensemble-fan:hover .fan-card {
+    transform: translate(calc(-50% + var(--fan-hover-x, 0px)), var(--fan-hover-y, 0px))
+      rotate(var(--fan-hover-rotate, 0deg));
+    box-shadow:
+      0 12px 32px -8px hsl(var(--shadow-color) / 0.18),
+      0 4px 8px 0 hsl(var(--shadow-color) / 0.08);
+  }
   .text-balance {
     text-wrap: balance;
   }

@@ -11,6 +11,7 @@ import {
   IconBriefcase,
   IconLayers,
 } from '@/components/ui/icons';
+import { EnsembleFan } from '@/components/ensemble-fan';
 
 export const metadata = { title: 'Career Autopilot — Your personal job engine' };
 
@@ -168,6 +169,22 @@ export default function HomePage() {
           </div>
 
           <PipelineTrack />
+        </section>
+
+        <section className="mt-24 sm:mt-32">
+          <div className="mb-10 text-center">
+            <p className="mb-2 text-2xs font-semibold uppercase tracking-wider text-accent">
+              The ensemble
+            </p>
+            <h2 className="text-3xl font-semibold tracking-tight text-balance">
+              Three parsers vote before you see anything.
+            </h2>
+            <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
+              Each brings a different bias — combined, they mirror how real ATS pipelines
+              actually score your résumé.
+            </p>
+          </div>
+          <EnsembleFan />
         </section>
 
         <section className="mt-24 sm:mt-32">
